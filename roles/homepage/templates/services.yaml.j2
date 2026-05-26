@@ -13,6 +13,12 @@
         href: https://proxmox.{{ cloudflare_zone }}/
         description: PVE node management
         icon: proxmox.png
+        widget:
+          type: proxmox
+          url: https://{{ hostvars['pve'].ansible_host }}:8006
+          username: "{{ proxmox_api_user }}!{{ proxmox_homepage_token_id }}"
+          password: '{% raw %}{{HOMEPAGE_VAR_PROXMOX_PASSWORD}}{% endraw %}'
+          node: "{{ proxmox_node }}"
 
     - Pi-hole:
         href: https://pihole.{{ cloudflare_zone }}/admin/
@@ -34,7 +40,20 @@
         description: Reverse proxy (manual config)
         icon: nginx.png
 
-- Services:
+    - Portainer:
+        href: https://portainer.{{ cloudflare_zone }}/
+        description: Docker container manager
+        icon: portainer.png
+        # env ID: Portainer → Environments → URL shows /#!/endpoints/<id>.
+        # Set `portainer_env_id` in homepage defaults or inventory to match.
+        # API token: Account → Access Tokens → add to secrets.yml as `portainer_api_key`.
+        widget:
+          type: portainer
+          url: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:9000
+          env: {{ portainer_env_id }}
+          key: '{% raw %}{{HOMEPAGE_VAR_PORTAINER_KEY}}{% endraw %}'
+
+- Apps:
     - Vaultwarden:
         href: https://vaultwarden.{{ cloudflare_zone }}/
         description: Password manager
@@ -52,7 +71,6 @@
         #   url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
         #   slug: <status-page-slug>
 
-- Storage:
     - Nextcloud:
         href: https://nextcloud.{{ cloudflare_zone }}/
         description: File storage + sync

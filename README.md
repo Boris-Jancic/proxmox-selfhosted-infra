@@ -1,10 +1,57 @@
-# Proxmox Homelab — Ansible
+# Proxmox Selfhosted Homelab — Ansible
+[![License](https://img.shields.io/github/license/Boris-Jancic/proxmox-homelab)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/Boris-Jancic/proxmox-homelab)](https://github.com/Boris-Jancic/proxmox-homelab/commits/main)
+[![Ansible](https://img.shields.io/badge/Ansible-IaC-red?logo=ansible)](https://www.ansible.com/)
+[![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?logo=proxmox)](https://www.proxmox.com/)
+[![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)](https://www.docker.com/)
+<img width="1261" height="449" alt="Screenshot_2026-05-26_15-53-23" src="https://github.com/user-attachments/assets/b81695c1-b942-479b-ae0b-6b604ce2599f" />
+> Image is AI generated
 
-Ansible-managed jerry-rigged single-node(for now) Proxmox homelab.
-Replaces an earlier `init-all.sh` script which provisioned my LXC's.
-As I continued to add more & more services the script balooned so I decided to make this repository to have everything managed as IaC.
+Single-node Proxmox homelab (for now), fully managed as IaC with Ansible.
+Runs the following services:
+- self-hosted DNS ad-blocking (Pi-hole)
+- password management (Vaultwarden)
+- file sync (Nextcloud AIO)
+- uptime monitoring (Uptime Kuma)
+- service dashboard (Homepage)
+
+Services are behind an nginx reverse proxy with TLS.
+This project replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
+
+
+## Hardware
+
+The specific mini PC I am using now is the **Lenovo IdeaCentre 200-01IBW**
+| Component | Specs |
+|---|---|
+| `Storage` | 128GB SSD + 1TB HDD |
+| `CPU` | Intel i3-5005U (4) @ 1.900GHz |
+| `Memory` | 12GB RAM |
+
+
+## Network topology
+
+```
+                    LAN (192.168.88.0/24)
+
+  [nginx-proxy .100]  ◀──  HTTPS entry point (80/443)
+         │
+         ├──▶  pi-hole        .101   DNS + network-wide ad-blocking
+         ├──▶  vaultwarden    .102   self-hosted password manager
+         ├──▶  uptime-kuma    .103   service uptime monitoring
+         ├──▶  homepage       .104   unified service dashboard
+         ├──▶  portainer      .110   container management UI
+         └──▶  nextcloud-aio  .110   file sync + office (Ubuntu VM)
+
+  [Proxmox PVE host]  —  CT/VM lifecycle via local API (127.0.0.1:8006)
+```
+
+All services are LAN-only by default. Point external DNS at nginx-proxy to expose selectively.
 
 ## Services
+<img width="1887" height="738" alt="image" src="https://github.com/user-attachments/assets/0c4a1f30-c3fc-429d-9383-dc7500d79f81" />
+
+> Homepage dashboard
 
 | Role | CT | Port | Notes |
 |---|---|---|---|
@@ -12,7 +59,7 @@ As I continued to add more & more services the script balooned so I decided to m
 | vaultwarden | vaultwarden | 8080 | Docker compose. `ADMIN_TOKEN` from `secrets.yml`. |
 | homepage | homepage | 3000 | Docker compose. Templates `settings/services/bookmarks/widgets.yaml` from inventory. |
 | uptime-kuma | uptime-kuma | 3001 | Docker compose. First-run admin setup is browser-only. |
-| pve-scripts-local | pve-scripts-local | 3000 | Bare-metal Node 22 + systemd. Clones [community-scripts/ProxmoxVE-Local](https://github.com/community-scripts/ProxmoxVE-Local), runs `npm run build`, served via `npm start`. |
+| portainer | ubuntu-vm1 (VM 110) | 9000 | Docker compose. CE edition. nginx-proxy terminates TLS, forwards to :9000. |
 | nextcloud-aio | ubuntu-vm1 (VM 110) | 8080 (admin), 11000 (Nextcloud) | Docker compose. Ubuntu 24.04 VM. AIO mastercontainer spawns all sub-services. Passphrase printed by Ansible after deploy. |
 | nginx-proxy | nginx-proxy | 80/443 | Bare-metal nginx. One vhost per `nginx_proxy_hosts` entry. Owns `sites-enabled/`. |
 
@@ -29,19 +76,32 @@ playbooks/                  one per service + provision-lxc + bootstrap-existing
 roles/<service>/            defaults, tasks, templates, handlers
 ```
 
-## Prerequisites
+## Getting started
 
-- `pip install --user ansible proxmoxer requests`
-- `ansible-galaxy collection install -r requirements.yml`
-- ed25519 key at `~/.ssh/id_ed25519.pub` (override `controller_ssh_pubkey_path`
-  in `group_vars/all/main.yml` for rsa).
-- Root SSH to the PVE node.
+Ansible runs **on the PVE host itself**
 
-## Initial setup
+### On the PVE host
 
-1. Set `pve.ansible_host` and adjust LXC CTIDs / IPs in `inventory.yml`.
-2. `cp group_vars/all/secrets.yml.example group_vars/all/secrets.yml` and fill in.
-3. `ssh-copy-id root@<pve-ip>`.
+1. `pip install --user ansible proxmoxer requests` (into venv — see CLAUDE.md)
+2. `ansible-galaxy collection install -r requirements.yml`
+3. Confirm an ed25519 key exists at `~/.ssh/id_ed25519.pub` — Ansible injects it into new LXCs at provision time. Override `controller_ssh_pubkey_path` in `group_vars/all/main.yml` for RSA.
+4. Set `pve.ansible_host` and adjust LXC CTIDs / IPs in `inventory.yml`.
+5. Copy and fill in secrets:
+
+```bash
+cp group_vars/all/secrets.yml.example group_vars/all/secrets.yml
+```
+
+| Variable | Description |
+|---|---|
+| `proxmox_api_password` | `root@pam` password for Proxmox API |
+| `lxc_root_password` | root password baked into new LXCs |
+| `pihole_web_password` | Pi-hole admin UI password |
+| `vaultwarden_admin_token` | Vaultwarden `/admin` token |
+| `ubuntu_vm_password` | Ubuntu VM root password |
+| `nextcloud_aio_password` | Nextcloud AIO admin passphrase |
+
+> **`secrets.yml` is gitignored.** Encrypt before storing anywhere: `ansible-vault encrypt group_vars/all/secrets.yml`. Append `--ask-vault-pass` to any playbook command when encrypted.
 
 ## Workflows
 
@@ -102,9 +162,8 @@ Automated — tag the host in `inventory.yml` with `lxc_docker_host: true`.
 `1-provision-lxc.yml`'s second play writes the line into
 `/etc/pve/lxc/<ctid>.conf` and reboots the CT if newly added.
 
-Trade-off: AppArmor fully disabled inside the CT. Fine for single-node
-homelab, not multi-tenant. The narrower
-`lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0` was the previous
+Trade-off: AppArmor fully disabled inside the CT (I know this is bad but for a single node cluster I will take the punches untill I refactor this).
+The narrower `lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0` was the previous
 approach — replaced because newer Docker workloads kept hitting unrelated
 AppArmor denials.
 
@@ -116,16 +175,6 @@ AppArmor denials.
 **New service role:** copy `roles/pihole/` shape (defaults, tasks/main.yml
 orchestrator, tasks/install.yml gated with `creates:`, templates). Add a
 playbook in `playbooks/`, add the host to the right inventory group.
-
-## Workstation → PVE sync
-
-```
-rsync -av --delete \
-  --exclude='.git' \
-  --exclude='group_vars/all/secrets.yml' \
-  ~/Documents/Personal/proxmox-homelab/ \
-  root@<pve-ip>:/root/proxmox-homelab/
-```
 
 ## Known limitations
 
