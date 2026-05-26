@@ -70,6 +70,11 @@ all:
               ssl: false
               backend_ssl: true
 
+            - name: portainer
+              domain: "portainer.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:9000
+              ssl: false
+
             - name: vaultwarden
               domain: "vaultwarden.{{ cloudflare_zone }}"
               destination: http://192.168.88.102:8080

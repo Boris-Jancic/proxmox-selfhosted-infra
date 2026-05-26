@@ -17,6 +17,12 @@ proxmox_api_user: "root@pam"
 # upstream and you want to stop bouncing the root password through plays).
 # proxmox_api_user: "root@pam!ansible-token"
 
+# Separate read-only token used only by the homepage widget (Proxmox provisioning
+# stays on password auth above — token auth breaks LXC + local storage).
+# Create in Proxmox GUI: Datacenter → API Tokens → Add, user root@pam,
+# token ID "homepage", privilege separation off.
+proxmox_homepage_token_id: "homepage"
+
 # LXC defaults
 proxmox_template_vmid: 799
 proxmox_storage: "data-hdd"

@@ -15,3 +15,7 @@ homepage_host_port: 3000
 # it to whatever the browser actually sends. Override once nginx-proxy
 # terminates a real hostname.
 homepage_allowed_hosts: "{{ ansible_host }}:{{ homepage_host_port }}"
+
+# Portainer local environment ID. Check: Portainer → Environments →
+# hover the local env → URL shows /#!/endpoints/<id>.
+portainer_env_id: 2
