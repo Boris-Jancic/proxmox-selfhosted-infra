@@ -1,13 +1,23 @@
 # Proxmox Selfhosted Homelab — Ansible
-
-
 [![License](https://img.shields.io/github/license/Boris-Jancic/proxmox-homelab)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/Boris-Jancic/proxmox-homelab)](https://github.com/Boris-Jancic/proxmox-homelab/commits/main)
 [![Ansible](https://img.shields.io/badge/Ansible-IaC-red?logo=ansible)](https://www.ansible.com/)
 [![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?logo=proxmox)](https://www.proxmox.com/)
 [![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)](https://www.docker.com/)
 <img width="1261" height="449" alt="Screenshot_2026-05-26_15-53-23" src="https://github.com/user-attachments/assets/b81695c1-b942-479b-ae0b-6b604ce2599f" />
-Single-node Proxmox homelab (for now), fully managed as IaC with Ansible. Runs self-hosted DNS ad-blocking (Pi-hole), password management (Vaultwarden), file sync (Nextcloud AIO), uptime monitoring (Uptime Kuma), and a service dashboard (Homepage) — all behind an nginx reverse proxy with TLS. Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
+> Image is AI generated
+
+Single-node Proxmox homelab (for now), fully managed as IaC with Ansible.
+Runs the following services:
+- self-hosted DNS ad-blocking (Pi-hole)
+- password management (Vaultwarden)
+- file sync (Nextcloud AIO)
+- uptime monitoring (Uptime Kuma)
+- service dashboard (Homepage)
+
+Services are behind an nginx reverse proxy with TLS.
+This project replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
+
 
 ## Hardware
 
@@ -39,6 +49,9 @@ The specific mini PC I am using now is the **Lenovo IdeaCentre 200-01IBW**
 All services are LAN-only by default. Point external DNS at nginx-proxy to expose selectively.
 
 ## Services
+<img width="1887" height="738" alt="image" src="https://github.com/user-attachments/assets/0c4a1f30-c3fc-429d-9383-dc7500d79f81" />
+
+> Homepage dashboard
 
 | Role | CT | Port | Notes |
 |---|---|---|---|
