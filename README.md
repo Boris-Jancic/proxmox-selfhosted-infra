@@ -1,14 +1,23 @@
-# Proxmox Homelab — Ansible
+# Proxmox Selfhosted Homelab — Ansible
+
 
 [![License](https://img.shields.io/github/license/Boris-Jancic/proxmox-homelab)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/Boris-Jancic/proxmox-homelab)](https://github.com/Boris-Jancic/proxmox-homelab/commits/main)
 [![Ansible](https://img.shields.io/badge/Ansible-IaC-red?logo=ansible)](https://www.ansible.com/)
 [![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?logo=proxmox)](https://www.proxmox.com/)
 [![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)](https://www.docker.com/)
+<img width="1261" height="449" alt="Screenshot_2026-05-26_15-53-23" src="https://github.com/user-attachments/assets/b81695c1-b942-479b-ae0b-6b604ce2599f" />
+Single-node Proxmox homelab (for now), fully managed as IaC with Ansible. Runs self-hosted DNS ad-blocking (Pi-hole), password management (Vaultwarden), file sync (Nextcloud AIO), uptime monitoring (Uptime Kuma), and a service dashboard (Homepage) — all behind an nginx reverse proxy with TLS. Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
 
-![banner](assets/proxmox-homelab-banner(1).png)
+## Hardware
 
-Single-node Proxmox homelab, fully managed as IaC with Ansible. Runs self-hosted DNS ad-blocking (Pi-hole), password management (Vaultwarden), file sync (Nextcloud AIO), uptime monitoring (Uptime Kuma), and a service dashboard (Homepage) — all behind an nginx reverse proxy with TLS. Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
+The specific mini PC I am using now is the **Lenovo IdeaCentre 200-01IBW**
+| Component | Specs |
+|---|---|
+| `Storage` | 128GB SSD + 1TB HDD |
+| `CPU` | Intel i3-5005U (4) @ 1.900GHz |
+| `Memory` | 12GB RAM |
+
 
 ## Network topology
 
@@ -56,7 +65,7 @@ roles/<service>/            defaults, tasks, templates, handlers
 
 ## Getting started
 
-Ansible runs **on the PVE host itself**, not a remote workstation.
+Ansible runs **on the PVE host itself**
 
 ### On the PVE host
 
@@ -140,9 +149,8 @@ Automated — tag the host in `inventory.yml` with `lxc_docker_host: true`.
 `1-provision-lxc.yml`'s second play writes the line into
 `/etc/pve/lxc/<ctid>.conf` and reboots the CT if newly added.
 
-Trade-off: AppArmor fully disabled inside the CT. Fine for single-node
-homelab, not multi-tenant. The narrower
-`lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0` was the previous
+Trade-off: AppArmor fully disabled inside the CT (I know this is bad but for a single node cluster I will take the punches untill I refactor this).
+The narrower `lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0` was the previous
 approach — replaced because newer Docker workloads kept hitting unrelated
 AppArmor denials.
 
@@ -166,16 +174,3 @@ playbook in `playbooks/`, add the host to the right inventory group.
   (argon2 hash form preferred; not done).
 - `community.general.proxmox` is deprecated in favor of `community.proxmox`;
   migration on the TODO.
-
-<details>
-<summary>Workstation → PVE sync</summary>
-
-```bash
-rsync -av --delete \
-  --exclude='.git' \
-  --exclude='group_vars/all/secrets.yml' \
-  ~/Documents/Personal/proxmox-homelab/ \
-  root@<pve-ip>:/root/proxmox-homelab/
-```
-
-</details>
