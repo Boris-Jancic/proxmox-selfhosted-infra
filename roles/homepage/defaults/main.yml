@@ -18,4 +18,4 @@ homepage_allowed_hosts: "{{ ansible_host }}:{{ homepage_host_port }}"
 
 # Portainer local environment ID. Check: Portainer → Environments →
 # hover the local env → URL shows /#!/endpoints/<id>.
-portainer_env_id: 1
+portainer_env_id: 2

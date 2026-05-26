@@ -17,4 +17,4 @@ services:
       # out of the rendered config files on the CT.
       HOMEPAGE_VAR_PIHOLE_KEY: "{{ pihole_web_password | default('') }}"
       HOMEPAGE_VAR_PORTAINER_KEY: "{{ portainer_api_key | default('') }}"
-      HOMEPAGE_VAR_PROXMOX_PASSWORD: "{{ proxmox_api_password | default('') }}"
+      HOMEPAGE_VAR_PROXMOX_PASSWORD: "{{ proxmox_homepage_token_secret | default('') }}"

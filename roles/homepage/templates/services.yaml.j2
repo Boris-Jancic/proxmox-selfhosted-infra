@@ -16,7 +16,7 @@
         widget:
           type: proxmox
           url: https://{{ hostvars['pve'].ansible_host }}:8006
-          username: "{{ proxmox_api_user }}"
+          username: "{{ proxmox_api_user }}!{{ proxmox_homepage_token_id }}"
           password: '{% raw %}{{HOMEPAGE_VAR_PROXMOX_PASSWORD}}{% endraw %}'
           node: "{{ proxmox_node }}"
 
@@ -53,7 +53,7 @@
           env: {{ portainer_env_id }}
           key: '{% raw %}{{HOMEPAGE_VAR_PORTAINER_KEY}}{% endraw %}'
 
-- Services:
+- Apps:
     - Vaultwarden:
         href: https://vaultwarden.{{ cloudflare_zone }}/
         description: Password manager
@@ -71,7 +71,6 @@
         #   url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
         #   slug: <status-page-slug>
 
-- Storage:
     - Nextcloud:
         href: https://nextcloud.{{ cloudflare_zone }}/
         description: File storage + sync
