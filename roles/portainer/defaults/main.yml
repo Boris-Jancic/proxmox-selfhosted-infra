@@ -1,0 +1,12 @@
+# Pin a specific tag — `latest` would silently upgrade on every run.
+# Bump deliberately after reviewing https://github.com/portainer/portainer/releases.
+portainer_image: "portainer/portainer-ce:2.21.5"
+
+portainer_install_dir: /opt/portainer
+portainer_data_dir: /opt/portainer/data
+
+# HTTP UI port — nginx-proxy terminates TLS and forwards here.
+portainer_host_port: 9000
+
+# HTTPS UI port — available directly if needed (self-signed cert).
+portainer_https_port: 9443

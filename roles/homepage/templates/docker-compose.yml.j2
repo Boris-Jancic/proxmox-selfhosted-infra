@@ -9,7 +9,12 @@ services:
       - {{ homepage_config_dir }}:/app/config
     environment:
       HOMEPAGE_ALLOWED_HOSTS: "{{ homepage_allowed_hosts }}"
+      # Proxmox uses a self-signed cert; disable Node.js TLS verification so
+      # the Proxmox widget can reach the API over HTTPS on the LAN.
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       # Widget secrets injected as HOMEPAGE_VAR_*; services.yaml references
       # them via {{ '{{HOMEPAGE_VAR_FOO}}' }} substitution. Keeps secrets
       # out of the rendered config files on the CT.
       HOMEPAGE_VAR_PIHOLE_KEY: "{{ pihole_web_password | default('') }}"
+      HOMEPAGE_VAR_PORTAINER_KEY: "{{ portainer_api_key | default('') }}"
+      HOMEPAGE_VAR_PROXMOX_PASSWORD: "{{ proxmox_api_password | default('') }}"
