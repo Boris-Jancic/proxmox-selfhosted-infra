@@ -10,10 +10,10 @@ proxmox_node: pve
 # PVE user — referenced by homepage widget template and embedded in token IDs below.
 proxmox_api_user: "root@pam"
 
-# Token auth — api_token_id format: "user@realm!tokenid"
-# Create in Proxmox GUI: Datacenter → Permissions → API Tokens → Add,
-# user root@pam, token ID "ansible", privilege separation off.
-# The UUID secret lives in secrets.yml as `proxmox_api_token_secret`.
+# Token label only (not the full "user@realm!tokenid" string — that's assembled
+# by the module from api_user + api_token_id). Create in Proxmox GUI:
+# Datacenter → Permissions → API Tokens → Add, user root@pam, token ID
+# "ansible", privilege separation off. UUID secret → secrets.yml.
 proxmox_api_token_id: "ansible"
 
 # LXC defaults
