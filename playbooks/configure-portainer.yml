@@ -1,0 +1,6 @@
+---
+- name: Install and configure Portainer CE
+  hosts: ubuntu-vm1
+  gather_facts: true
+  roles:
+    - portainer
