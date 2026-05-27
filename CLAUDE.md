@@ -10,19 +10,16 @@ Ansible runs **directly on the Proxmox host** (not a remote workstation). Always
 source ~/ansible-env/bin/activate
 ```
 
-Proxmox API is reached at `127.0.0.1:8006` (loopback). API auth uses **password** (`root@pam` + `proxmox_api_password` from `secrets.yml`) — token auth breaks LXC provisioning with local storage.
+Proxmox API is reached at `127.0.0.1:8006` (loopback). API auth uses **token** (`root@pam!ansible` + `proxmox_api_token_secret` from `secrets.yml`). Token ID is set in `group_vars/all/main.yml` as `proxmox_api_token_id`.
 
 ## Common commands
 
 ```bash
 # Provision / start all LXC containers
-ansible-playbook playbooks/1-provision-lxc.yml
+ansible-playbook playbooks/provision-lxc.yml
 
 # Provision Ubuntu VMs (downloads cloud image, creates VM, cloud-init, waits for SSH)
-ansible-playbook playbooks/3-provision-vms.yml
-
-# One-time SSH key retrofit for existing containers
-ansible-playbook playbooks/2-bootstrap-existing-lxc-keys.yml
+ansible-playbook playbooks/provision-vms.yml
 
 # Configure a single service
 ansible-playbook playbooks/configure-<service>.yml
@@ -43,7 +40,7 @@ If `secrets.yml` is vault-encrypted, append `--ask-vault-pass` to any command ab
 
 Two distinct play types — never mix them:
 
-1. **Provision** (`1-provision-lxc.yml`) — talks to Proxmox API via `community.proxmox.proxmox` (localhost connection). Creates LXCs, injects SSH key, and writes `lxc.apparmor.profile: unconfined` into `/etc/pve/lxc/<ctid>.conf` for hosts tagged `lxc_docker_host: true`.
+1. **Provision** (`provision-lxc.yml`) — talks to Proxmox API via `community.proxmox.proxmox` (localhost connection). Creates LXCs, injects SSH key, and writes `lxc.apparmor.profile: unconfined` into `/etc/pve/lxc/<ctid>.conf` for hosts tagged `lxc_docker_host: true`.
 
 2. **Configure** (`configure-*.yml`) — SSHes into the target LXC or the PVE host, runs a single named role.
 
@@ -78,7 +75,7 @@ Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]
 
 ## Known gotchas
 
-- **`--check` fails for `1-provision-lxc.yml`** — `community.proxmox` skips itself in check mode. Run for real; existing CTs return `changed=0`.
+- **`--check` fails for `provision-lxc.yml`** — `community.proxmox` skips itself in check mode. Run for real; existing CTs return `changed=0`.
 - **New LXC may have empty `/etc/resolv.conf`** — set nameserver via Proxmox GUI before the configure play runs.
 - **IPv6 hangs `apt`** — add `Acquire::ForceIPv4 "true"` to `/etc/apt/apt.conf.d/99force-ipv4` if apt stalls in a new CT.
 - **`proxmoxer` + `requests` must be in the venv** — missing them causes cryptic import errors from the Proxmox module.
@@ -92,7 +89,7 @@ Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]
 ## Adding a new service
 
 1. Add a host entry under `lxc_containers.hosts` in `inventory.yml` (ctid, ansible_host, memory, disk, cores). Tag `lxc_docker_host: true` if it runs Docker.
-2. Run `1-provision-lxc.yml` to create the CT.
+2. Run `provision-lxc.yml` to create the CT.
 3. Copy `roles/pihole/` shape; add `tasks/install.yml` gated with `creates:` for idempotency.
 4. Add `playbooks/configure-<service>.yml` targeting the new inventory group.
 5. Add a matching inventory group under `children:`.
