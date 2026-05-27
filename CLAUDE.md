@@ -10,7 +10,7 @@ Ansible runs **directly on the Proxmox host** (not a remote workstation). Always
 source ~/ansible-env/bin/activate
 ```
 
-Proxmox API is reached at `127.0.0.1:8006` (loopback). API auth uses **password** (`root@pam` + `proxmox_api_password` from `secrets.yml`) — token auth breaks LXC provisioning with local storage.
+Proxmox API is reached at `127.0.0.1:8006` (loopback). API auth uses **token** (`root@pam!ansible` + `proxmox_api_token_secret` from `secrets.yml`). Token ID is set in `group_vars/all/main.yml` as `proxmox_api_token_id`.
 
 ## Common commands
 

@@ -7,15 +7,14 @@ proxmox_api_host: "127.0.0.1"
 proxmox_api_port: 8006
 proxmox_node: pve
 
-# Password auth (current path — community.proxmox + LXC + local storage
-# breaks under token auth; see README "Known Gotchas"). The password
-# itself lives in secrets.yml as `proxmox_api_password`.
+# PVE user — referenced by homepage widget template and embedded in token IDs below.
 proxmox_api_user: "root@pam"
 
-# Token auth alternative (uncomment + add proxmox_api_token_id /
-# proxmox_api_token_secret to secrets.yml when the LXC issue is fixed
-# upstream and you want to stop bouncing the root password through plays).
-# proxmox_api_user: "root@pam!ansible-token"
+# Token auth — api_token_id format: "user@realm!tokenid"
+# Create in Proxmox GUI: Datacenter → Permissions → API Tokens → Add,
+# user root@pam, token ID "ansible", privilege separation off.
+# The UUID secret lives in secrets.yml as `proxmox_api_token_secret`.
+proxmox_api_token_id: "ansible"
 
 # LXC defaults
 proxmox_template_vmid: 799

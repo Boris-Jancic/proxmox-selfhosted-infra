@@ -114,23 +114,7 @@ all:
           # public hostname when fronted by nginx-proxy.
           homepage_allowed_hosts: "homepage.{{ cloudflare_zone }},192.168.88.104:3000"
 
-    nginx-proxy:
-      hosts:
-        nginx-proxy:
-
     pihole:
       hosts:
         pi-hole:
-
-    vaultwarden:
-      hosts:
-        vaultwarden:
-
-    uptime-kuma:
-      hosts:
-        uptime-kuma:
-
-    homepage:
-      hosts:
-        homepage:
 
