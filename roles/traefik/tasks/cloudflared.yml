@@ -1,0 +1,31 @@
+---
+- name: Check if cloudflared installed
+  stat:
+    path: /usr/bin/cloudflared
+  register: cloudflared_bin
+
+- name: Download cloudflared deb
+  get_url:
+    url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+    dest: /tmp/cloudflared.deb
+  when: not cloudflared_bin.stat.exists
+
+- name: Install cloudflared
+  apt:
+    deb: /tmp/cloudflared.deb
+  when: not cloudflared_bin.stat.exists
+
+- name: Check if tunnel service installed
+  stat:
+    path: /etc/systemd/system/cloudflared.service
+  register: cloudflared_svc
+
+- name: Install tunnel as systemd service
+  command: "cloudflared service install {{ cloudflare_tunnel_token }}"
+  when: not cloudflared_svc.stat.exists
+
+- name: Ensure cloudflared started
+  systemd:
+    name: cloudflared
+    state: started
+    enabled: true

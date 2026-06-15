@@ -1,0 +1,9 @@
+---
+- name: Install traefik binary
+  include_tasks: install.yml
+
+- name: Configure traefik
+  include_tasks: configure.yml
+
+- name: Install and configure cloudflared tunnel
+  include_tasks: cloudflared.yml

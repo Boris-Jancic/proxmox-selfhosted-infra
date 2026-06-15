@@ -119,6 +119,58 @@ all:
           # public hostname when fronted by nginx-proxy.
           homepage_allowed_hosts: "homepage.{{ cloudflare_zone }},192.168.88.104:3000"
 
+        traefik:
+          ctid: 105
+          ansible_host: 192.168.88.105
+          memory: 256
+          disk: 4
+          cores: 1
+          traefik_acme_email: "bjancic@cscsw.com"
+          traefik_routes:
+            - name: cloud
+              domain: "cloud.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:11000
+
+            - name: homepage
+              domain: "homepage.{{ cloudflare_zone }}"
+              destination: http://192.168.88.104:3000
+
+            - name: kuma
+              domain: "kuma.{{ cloudflare_zone }}"
+              destination: http://192.168.88.103:3001
+
+            - name: nextcloud
+              domain: "nextcloud.{{ cloudflare_zone }}"
+              destination: https://192.168.88.110:8080
+              backend_ssl: true
+
+            - name: pihole
+              domain: "pihole.{{ cloudflare_zone }}"
+              destination: http://192.168.88.101:80
+              redirect_root_to: /admin/
+
+            - name: portainer
+              domain: "portainer.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:9000
+
+            - name: proxmox
+              domain: "proxmox.{{ cloudflare_zone }}"
+              destination: https://192.168.88.10:8006
+              backend_ssl: true
+
+            - name: vaultwarden
+              domain: "vaultwarden.{{ cloudflare_zone }}"
+              destination: http://192.168.88.102:8080
+
+            - name: traefik
+              domain: "traefik.{{ cloudflare_zone }}"
+              destination: http://localhost:8080
+              basic_auth_users: "{{ traefik_dashboard_users }}"
+
+    traefik:
+      hosts:
+        traefik:
+
     pihole:
       hosts:
         pi-hole:
