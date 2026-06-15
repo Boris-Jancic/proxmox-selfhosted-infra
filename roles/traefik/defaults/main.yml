@@ -1,0 +1,23 @@
+---
+traefik_version: "3.2.0"
+traefik_binary_url: "https://github.com/traefik/traefik/releases/download/v{{ traefik_version }}/traefik_v{{ traefik_version }}_linux_amd64.tar.gz"
+
+traefik_config_dir: /etc/traefik
+traefik_dynamic_dir: /etc/traefik/dynamic
+
+# Dashboard on :8080 (not exposed via tunnel — access via SSH port-forward).
+traefik_dashboard_enabled: true
+traefik_log_level: INFO
+
+# Routes rendered into the file-provider dynamic config.
+# Each entry: name, domain (Jinja2 ok), destination URL, backend_ssl (optional bool),
+#             redirect_root_to (optional str), basic_auth_users (optional list of "user:htpasswd").
+traefik_routes: []
+
+# BasicAuth users for dashboard route. Generate with:
+#   htpasswd -nB admin    (bcrypt, recommended)
+# List of "username:hashed_password" strings — set real values in secrets.yml.
+traefik_dashboard_users: []
+
+# cloudflared
+cloudflared_config_dir: /etc/cloudflared

@@ -1,0 +1,16 @@
+log:
+  level: {{ traefik_log_level }}
+
+# Dashboard on :8080 — not exposed via tunnel, reach via SSH port-forward.
+api:
+  dashboard: {{ traefik_dashboard_enabled | lower }}
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  file:
+    directory: {{ traefik_dynamic_dir }}
+    watch: true

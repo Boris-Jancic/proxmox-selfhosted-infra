@@ -23,9 +23,13 @@ Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated
 ## Network topology
 
 ```
-                    LAN (192.168.88.0/24)
-
-  [nginx-proxy .100]  ◀──  HTTPS entry point (80/443)
+  Internet
+     │
+     ▼
+  Cloudflare (DNS + Zero Trust tunnel)
+     │
+     ▼
+  [traefik .105]  ◀──  Cloudflare tunnel entry point (:80, dashboard :8080)
          │
          ├──▶  pi-hole        .101   DNS + network-wide ad-blocking
          ├──▶  vaultwarden    .102   self-hosted password manager
@@ -37,7 +41,7 @@ Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated
   [Proxmox PVE host]  —  CT/VM lifecycle via local API (127.0.0.1:8006)
 ```
 
-All services are LAN-only by default. Point external DNS at nginx-proxy to expose selectively.
+External access via Cloudflare Zero Trust tunnel — no open ports on the router required.
 
 ## Services
 
@@ -47,13 +51,14 @@ All services are LAN-only by default. Point external DNS at nginx-proxy to expos
 
 | Service | CT / VM | IP | Port | Docs |
 |---|---|---|---|---|
-| nginx-proxy | CT 100 | .100 | 80/443 | [docs/nginx-proxy.md](docs/nginx-proxy.md) |
+| traefik | CT 105 | .105 | 80 (proxy), 8080 (dashboard) | [docs/traefik.md](docs/traefik.md) |
 | pi-hole | CT 101 | .101 | 80 | [docs/pihole.md](docs/pihole.md) |
 | vaultwarden | CT 102 | .102 | 8080 | [docs/vaultwarden.md](docs/vaultwarden.md) |
 | uptime-kuma | CT 103 | .103 | 3001 | [docs/uptime-kuma.md](docs/uptime-kuma.md) |
 | homepage | CT 104 | .104 | 3000 | [docs/homepage.md](docs/homepage.md) |
 | portainer | VM 110 | .110 | 9000 | [docs/portainer.md](docs/portainer.md) |
 | nextcloud-aio | VM 110 | .110 | 8080 / 11000 | [docs/nextcloud.md](docs/nextcloud.md) |
+| nginx-proxy _(legacy)_ | CT 100 | .100 | 80/443 | [docs/nginx-proxy.md](docs/nginx-proxy.md) |
 
 ## Getting started
 
@@ -88,6 +93,8 @@ ansible-playbook playbooks/configure-<service>.yml
 | `vaultwarden_admin_token` | Vaultwarden `/admin` token |
 | `ubuntu_vm_password` | Ubuntu VM root password |
 | `nextcloud_aio_password` | Nextcloud AIO admin passphrase |
+| `cloudflare_tunnel_token` | Cloudflare Zero Trust tunnel token for Traefik CT |
+| `traefik_dashboard_users` | BasicAuth users for Traefik dashboard (`htpasswd -nB admin`) |
 
 > **`secrets.yml` is gitignored.** Encrypt before storing anywhere: `ansible-vault encrypt group_vars/all/secrets.yml`. Append `--ask-vault-pass` to any playbook command when encrypted.
 

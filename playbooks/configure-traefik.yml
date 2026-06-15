@@ -1,0 +1,6 @@
+---
+- name: Install and configure traefik
+  hosts: traefik
+  gather_facts: true
+  roles:
+    - traefik
