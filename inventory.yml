@@ -161,10 +161,14 @@ all:
             - name: vaultwarden
               domain: "vaultwarden.{{ cloudflare_zone }}"
               destination: http://192.168.88.102:8080
+              rate_limit:
+                average: 20
+                burst: 50
+                period: 1m
 
             - name: traefik
               domain: "traefik.{{ cloudflare_zone }}"
-              destination: http://localhost:8080
+              service: api@internal
               basic_auth_users: "{{ traefik_dashboard_users }}"
 
     traefik:

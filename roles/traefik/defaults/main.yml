@@ -19,5 +19,9 @@ traefik_routes: []
 # List of "username:hashed_password" strings — set real values in secrets.yml.
 traefik_dashboard_users: []
 
+# Security headers injected on every route.
+traefik_security_headers_enabled: true
+traefik_sts_seconds: 31536000
+
 # cloudflared
 cloudflared_config_dir: /etc/cloudflared

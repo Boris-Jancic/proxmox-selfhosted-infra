@@ -4,7 +4,6 @@ log:
 # Dashboard on :8080 — not exposed via tunnel, reach via SSH port-forward.
 api:
   dashboard: {{ traefik_dashboard_enabled | lower }}
-  insecure: true
 
 entryPoints:
   web:

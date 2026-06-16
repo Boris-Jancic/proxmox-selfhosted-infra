@@ -1,12 +1,13 @@
 http:
-{% set ns_mw = namespace(has_middleware=false) %}
-{% for route in traefik_routes %}
-{% if route.redirect_root_to is defined or (route.basic_auth_users is defined and route.basic_auth_users | length > 0) %}
-{% set ns_mw.has_middleware = true %}
-{% endif %}
-{% endfor %}
-{% if ns_mw.has_middleware %}
   middlewares:
+{% if traefik_security_headers_enabled %}
+    security-headers:
+      headers:
+        stsSeconds: {{ traefik_sts_seconds }}
+        stsIncludeSubdomains: true
+        contentTypeNosniff: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+{% endif %}
 {% for route in traefik_routes %}
 {% if route.redirect_root_to is defined %}
     {{ route.name }}-root-redirect:
@@ -23,16 +24,25 @@ http:
           - "{{ user }}"
 {% endfor %}
 {% endif %}
-{% endfor %}
+{% if route.rate_limit is defined %}
+    {{ route.name }}-ratelimit:
+      rateLimit:
+        average: {{ route.rate_limit.average | default(20) }}
+        burst: {{ route.rate_limit.burst | default(50) }}
+        period: {{ route.rate_limit.period | default('1m') }}
 {% endif %}
+{% endfor %}
+
   routers:
 {% for route in traefik_routes %}
 {% set mw_list = [] %}
+{% if traefik_security_headers_enabled %}{% set _ = mw_list.append('security-headers') %}{% endif %}
 {% if route.redirect_root_to is defined %}{% set _ = mw_list.append(route.name + '-root-redirect') %}{% endif %}
 {% if route.basic_auth_users is defined and route.basic_auth_users | length > 0 %}{% set _ = mw_list.append(route.name + '-auth') %}{% endif %}
+{% if route.rate_limit is defined %}{% set _ = mw_list.append(route.name + '-ratelimit') %}{% endif %}
     {{ route.name }}:
       rule: "Host(`{{ route.domain }}`)"
-      service: {{ route.name }}
+      service: {{ route.service | default(route.name) }}
       entryPoints:
         - web
 {% if mw_list %}
@@ -43,8 +53,12 @@ http:
 {% endif %}
 {% endfor %}
 
+{% set ns_svc = namespace(has_services=false) %}
+{% for route in traefik_routes %}{% if route.destination is defined %}{% set ns_svc.has_services = true %}{% endif %}{% endfor %}
+{% if ns_svc.has_services %}
   services:
 {% for route in traefik_routes %}
+{% if route.destination is defined %}
     {{ route.name }}:
       loadBalancer:
 {% if route.backend_ssl | default(false) %}
@@ -52,7 +66,9 @@ http:
 {% endif %}
         servers:
           - url: "{{ route.destination }}"
+{% endif %}
 {% endfor %}
+{% endif %}
 
 {% set ns = namespace(needs_insecure=false) %}
 {% for route in traefik_routes %}{% if route.backend_ssl | default(false) %}{% set ns.needs_insecure = true %}{% endif %}{% endfor %}
