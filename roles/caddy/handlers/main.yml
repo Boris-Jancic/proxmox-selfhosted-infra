@@ -1,0 +1,14 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: restart caddy
+  systemd:
+    name: caddy
+    state: restarted
+
+- name: restart cloudflared
+  systemd:
+    name: cloudflared
+    state: restarted
