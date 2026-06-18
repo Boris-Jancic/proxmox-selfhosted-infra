@@ -1,5 +1,5 @@
 # Managed by Ansible (roles/homepage/templates/services.yaml.j2).
-# User-facing `href` links go through nginx-proxy at <sub>.{{ cloudflare_zone }}
+# User-facing `href` links go through Caddy at <sub>.{{ cloudflare_zone }}
 # so external (Cloudflare-proxied) and LAN access both work.
 # Widget `url` fields stay on internal IPs — the homepage container talks to
 # them directly so DNS/Cloudflare round-trips don't slow widget refreshes.
@@ -34,11 +34,11 @@
           # web admin password or an app-password from /admin > Settings > API.
           key: '{% raw %}{{HOMEPAGE_VAR_PIHOLE_KEY}}{% endraw %}'
 
-    - Nginx Proxy:
+    - Caddy:
         # No public vhost — admin of the proxy itself stays on the LAN IP.
-        href: http://{{ hostvars['nginx-proxy'].ansible_host }}/
-        description: Reverse proxy (manual config)
-        icon: nginx.png
+        href: http://{{ hostvars['caddy'].ansible_host }}/
+        description: Reverse proxy + Cloudflare tunnel
+        icon: caddy.png
 
     - Portainer:
         href: https://portainer.{{ cloudflare_zone }}/

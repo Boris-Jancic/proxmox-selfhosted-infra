@@ -29,7 +29,7 @@ Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated
   Cloudflare (DNS + Zero Trust tunnel)
      │
      ▼
-  [traefik .105]  ◀──  Cloudflare tunnel entry point (:80, dashboard :8080)
+  [caddy .100]    ◀──  Cloudflare tunnel entry point (:80)
          │
          ├──▶  pi-hole        .101   DNS + network-wide ad-blocking
          ├──▶  vaultwarden    .102   self-hosted password manager
@@ -51,14 +51,13 @@ External access via Cloudflare Zero Trust tunnel — no open ports on the router
 
 | Service | CT / VM | IP | Port | Docs |
 |---|---|---|---|---|
-| traefik | CT 105 | .105 | 80 (proxy), 8080 (dashboard) | [docs/traefik.md](docs/traefik.md) |
+| caddy | CT 100 | .100 | 80 (proxy) | [docs/caddy.md](docs/caddy.md) |
 | pi-hole | CT 101 | .101 | 80 | [docs/pihole.md](docs/pihole.md) |
 | vaultwarden | CT 102 | .102 | 8080 | [docs/vaultwarden.md](docs/vaultwarden.md) |
 | uptime-kuma | CT 103 | .103 | 3001 | [docs/uptime-kuma.md](docs/uptime-kuma.md) |
 | homepage | CT 104 | .104 | 3000 | [docs/homepage.md](docs/homepage.md) |
 | portainer | VM 110 | .110 | 9000 | [docs/portainer.md](docs/portainer.md) |
 | nextcloud-aio | VM 110 | .110 | 8080 / 11000 | [docs/nextcloud.md](docs/nextcloud.md) |
-| nginx-proxy _(legacy)_ | CT 100 | .100 | 80/443 | [docs/nginx-proxy.md](docs/nginx-proxy.md) |
 
 ## Getting started
 
@@ -93,8 +92,7 @@ ansible-playbook playbooks/configure-<service>.yml
 | `vaultwarden_admin_token` | Vaultwarden `/admin` token |
 | `ubuntu_vm_password` | Ubuntu VM root password |
 | `nextcloud_aio_password` | Nextcloud AIO admin passphrase |
-| `cloudflare_tunnel_token` | Cloudflare Zero Trust tunnel token for Traefik CT |
-| `traefik_dashboard_users` | BasicAuth users for Traefik dashboard (`htpasswd -nB admin`) |
+| `cloudflare_tunnel_token` | Cloudflare Zero Trust tunnel token for the Caddy CT |
 
 > **`secrets.yml` is gitignored.** Encrypt before storing anywhere: `ansible-vault encrypt group_vars/all/secrets.yml`. Append `--ask-vault-pass` to any playbook command when encrypted.
 
