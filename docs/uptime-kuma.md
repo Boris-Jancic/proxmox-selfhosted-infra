@@ -3,7 +3,7 @@
 Self-hosted uptime monitoring with a web UI. Runs as a Docker Compose service.
 
 - **CT:** 103 | **IP:** 192.168.88.103 | **Port:** 3001
-- **Public URL:** `https://kuma.{{ cloudflare_zone }}` (via nginx-proxy)
+- **Public URL:** `https://kuma.{{ cloudflare_zone }}` (via Caddy)
 
 ## Variables
 

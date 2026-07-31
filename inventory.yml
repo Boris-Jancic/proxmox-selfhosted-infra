@@ -18,74 +18,31 @@ all:
           memory: 6196
           disk: 512
           cores: 3
+          description: |
+            # ubuntu-vm1
+            Virtual machine that hosts following workloads:
+              - portainer
+              - nextcloudAIO
+              - minio
+
+            Do not edit manually.
         
     lxc_containers:
       vars:
         ansible_user: root
 
       hosts:
-        nginx-proxy:
-          ctid: 100
-          ansible_host: 192.168.88.100
-          memory: 256
-          disk: 4
-          cores: 1
-          # Reverse-proxy vhost list. ssl: true terminates TLS locally;
-          # the cert files must already exist (this role does not run
-          # certbot). backend_ssl: true forces proxy_ssl_verify off for
-          # self-signed upstreams (Proxmox 8006, Nextcloud-AIO admin :8080).
-          # Domains are templated from `cloudflare_zone` in
-          # group_vars/all/main.yml so a zone change is one-line.
-          nginx_proxy_hosts:
-            - name: cloud
-              domain: "cloud.{{ cloudflare_zone }}"
-              destination: http://192.168.88.110:11000
-              ssl: false
-
-            - name: homepage
-              domain: "homepage.{{ cloudflare_zone }}"
-              destination: http://192.168.88.104:3000
-              ssl: false
-
-            - name: kuma
-              domain: "kuma.{{ cloudflare_zone }}"
-              destination: http://192.168.88.103:3001
-              ssl: false
-
-            - name: nextcloud
-              domain: "nextcloud.{{ cloudflare_zone }}"
-              destination: https://192.168.88.110:8080
-
-            - name: pihole
-              domain: "pihole.{{ cloudflare_zone }}"
-              destination: http://192.168.88.101:80
-              ssl: false
-              # Pi-hole's UI is mounted at /admin/, not /. Without this,
-              # the bare domain would land on a 403/blank.
-              redirect_root_to: /admin/
-
-            - name: proxmox
-              domain: "proxmox.{{ cloudflare_zone }}"
-              destination: https://192.168.88.10:8006
-              ssl: false
-              backend_ssl: true
-
-            - name: portainer
-              domain: "portainer.{{ cloudflare_zone }}"
-              destination: http://192.168.88.110:9000
-              ssl: false
-
-            - name: vaultwarden
-              domain: "vaultwarden.{{ cloudflare_zone }}"
-              destination: http://192.168.88.102:8080
-              ssl: false
-
         pi-hole:
           ctid: 101
           ansible_host: 192.168.88.101
           memory: 256
           disk: 4
           cores: 1
+          description: |
+            # LXC - Pi-Hole
+            Active DNS query blocking
+
+            Do not edit manually.
 
         vaultwarden:
           ctid: 102
@@ -93,6 +50,11 @@ all:
           memory: 256
           disk: 4
           cores: 1
+          description: |
+            # LXC - VaultWarden
+            Manages passwords
+
+            Do not edit manually.
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
@@ -101,7 +63,7 @@ all:
           ctid: 103
           ansible_host: 192.168.88.103
           memory: 256
-          disk: 4
+          disk: 12
           cores: 1
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
@@ -116,10 +78,51 @@ all:
           lxc_docker_host: true
           # Host header allow-list for homepage v0.10+. Include every name
           # the browser might send: LAN IP:port for direct access, plus the
-          # public hostname when fronted by nginx-proxy.
+          # public hostname when fronted by the Caddy reverse proxy.
           homepage_allowed_hosts: "homepage.{{ cloudflare_zone }},192.168.88.104:3000"
 
-    pihole:
-      hosts:
-        pi-hole:
+        caddy:
+          ctid: 100
+          ansible_host: 192.168.88.100
+          memory: 256
+          disk: 4
+          cores: 1
+          caddy_routes:
+            - name: proxmox
+              domain: "proxmox.{{ cloudflare_zone }}"
+              destination: https://192.168.88.10:8006
+
+            - name: pihole
+              domain: "pihole.{{ cloudflare_zone }}"
+              destination: http://192.168.88.101:80
+              redirect_root_to: /admin/
+
+            - name: homepage
+              domain: "homepage.{{ cloudflare_zone }}"
+              destination: http://192.168.88.104:3000
+
+            - name: kuma
+              domain: "kuma.{{ cloudflare_zone }}"
+              destination: http://192.168.88.103:3001
+
+            - name: portainer
+              domain: "portainer.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:9000
+
+            - name: cloud
+              domain: "cloud.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:11000
+
+            - name: nextcloud
+              domain: "nextcloud.{{ cloudflare_zone }}"
+              destination: https://192.168.88.110:8080
+
+            - name: blog
+              domain: "blog.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:3000
+
+            - name: vaultwarden
+              domain: "vaultwarden.{{ cloudflare_zone }}"
+              destination: http://192.168.88.102:8080
+
 

@@ -1,6 +1,0 @@
----
-- name: Install nginx
-  include_tasks: install.yml
-
-- name: Configure nginx vhosts
-  include_tasks: configure.yml

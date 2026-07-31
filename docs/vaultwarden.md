@@ -3,7 +3,7 @@
 Self-hosted Bitwarden-compatible password manager. Runs as a Docker Compose service.
 
 - **CT:** 102 | **IP:** 192.168.88.102 | **Port:** 8080
-- **Public URL:** `https://vaultwarden.{{ cloudflare_zone }}` (via nginx-proxy)
+- **Public URL:** `https://vaultwarden.{{ cloudflare_zone }}` (via Caddy)
 
 ## Secrets
 

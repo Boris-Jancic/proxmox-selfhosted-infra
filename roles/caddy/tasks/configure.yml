@@ -1,0 +1,17 @@
+---
+- name: Ensure caddy config directory
+  file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Render Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: restart caddy

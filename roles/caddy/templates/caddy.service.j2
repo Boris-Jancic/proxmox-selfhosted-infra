@@ -1,0 +1,15 @@
+[Unit]
+Description=Caddy reverse proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/caddy run --config {{ caddy_config_dir }}/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config {{ caddy_config_dir }}/Caddyfile --force
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
