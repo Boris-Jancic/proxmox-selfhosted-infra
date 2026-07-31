@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Environment
 
-Ansible runs **directly on the Proxmox host** (not a remote workstation). Always activate the venv before running any Ansible command:
-
-```bash
-source ~/ansible-env/bin/activate
-```
+Ansible runs **directly on the Proxmox host** (not a remote workstation). It is installed via pip into the system Python (`ansible-core` + `proxmoxer` + `requests` in `/usr/local/lib/python3.11/dist-packages`), so `ansible-playbook` is on `PATH` — no venv to activate. (An earlier setup used `~/ansible-env`; that venv no longer exists.)
 
 Proxmox API is reached at `127.0.0.1:8006` (loopback). API auth uses **token** (`root@pam!ansible` + `proxmox_api_token_secret` from `secrets.yml`). Token ID is set in `group_vars/all/main.yml` as `proxmox_api_token_id`.
 
 ## Common commands
 
 ```bash
+# Provision + configure everything (full homelab bring-up)
+ansible-playbook playbooks/site.yml
+
+# Only configure plays (skip provisioning); per-service: --tags caddy, --tags pihole, ...
+ansible-playbook playbooks/site.yml --tags configure
+
 # Provision / start all LXC containers
 ansible-playbook playbooks/provision-lxc.yml
 
@@ -78,8 +80,8 @@ Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]
 - **`--check` fails for `provision-lxc.yml`** — `community.proxmox` skips itself in check mode. Run for real; existing CTs return `changed=0`.
 - **New LXC may have empty `/etc/resolv.conf`** — set nameserver via Proxmox GUI before the configure play runs.
 - **IPv6 hangs `apt`** — add `Acquire::ForceIPv4 "true"` to `/etc/apt/apt.conf.d/99force-ipv4` if apt stalls in a new CT.
-- **`proxmoxer` + `requests` must be in the venv** — missing them causes cryptic import errors from the Proxmox module.
-- **Never `pip install` into system Python on the PVE host** — Proxmox's own Python environment must not be modified.
+- **`proxmoxer` + `requests` must be importable by the same Python that runs Ansible** (`/usr/bin/python3`) — missing them causes cryptic import errors from the Proxmox module. Both live in `/usr/local/lib/python3.11/dist-packages`.
+- **pip installs go to `/usr/local/lib`, not Proxmox's own packages** — Debian-managed packages in `/usr/lib/python3/dist-packages` (including Proxmox's) are never overwritten by pip; don't force `--target` or `--break-system-packages` into `/usr/lib`.
 - **Caddy is the reverse proxy** — `caddy_routes` on the `caddy` host in `inventory.yml` renders the full Caddyfile; routes serve plain HTTP on `:80` (`http://` site addresses, `auto_https off`) because Cloudflare terminates TLS at the tunnel. The co-located `cloudflared` tunnel dials `localhost:80`.
 - **`https://` upstreams need no extra flag** — the Caddyfile template auto-adds `tls_insecure_skip_verify` when `destination` starts with `https://` (covers Proxmox + Nextcloud self-signed certs); override with `backend_ssl: true` otherwise.
 - **Pi-hole password idempotency** keyed on marker file `/etc/pihole/.ansible_password_hash` — delete it to force a re-sync.

@@ -18,6 +18,14 @@ all:
           memory: 6196
           disk: 512
           cores: 3
+          description: |
+            # ubuntu-vm1
+            Virtual machine that hosts following workloads:
+              - portainer
+              - nextcloudAIO
+              - minio
+
+            Do not edit manually.
         
     lxc_containers:
       vars:
@@ -30,6 +38,11 @@ all:
           memory: 256
           disk: 4
           cores: 1
+          description: |
+            # LXC - Pi-Hole
+            Active DNS query blocking
+
+            Do not edit manually.
 
         vaultwarden:
           ctid: 102
@@ -37,6 +50,11 @@ all:
           memory: 256
           disk: 4
           cores: 1
+          description: |
+            # LXC - VaultWarden
+            Manages passwords
+
+            Do not edit manually.
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
@@ -45,7 +63,7 @@ all:
           ctid: 103
           ansible_host: 192.168.88.103
           memory: 256
-          disk: 4
+          disk: 12
           cores: 1
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
@@ -98,6 +116,10 @@ all:
             - name: nextcloud
               domain: "nextcloud.{{ cloudflare_zone }}"
               destination: https://192.168.88.110:8080
+
+            - name: blog
+              domain: "blog.{{ cloudflare_zone }}"
+              destination: http://192.168.88.110:3000
 
             - name: vaultwarden
               domain: "vaultwarden.{{ cloudflare_zone }}"

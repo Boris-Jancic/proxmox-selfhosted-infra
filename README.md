@@ -64,9 +64,8 @@ External access via Cloudflare Zero Trust tunnel — no open ports on the router
 Ansible runs **directly on the PVE host**.
 
 ```bash
-# 1. Set up venv and install deps
-python3 -m venv ~/ansible-env && source ~/ansible-env/bin/activate
-pip install ansible proxmoxer requests
+# 1. Install deps into system Python (lands in /usr/local/lib, leaves Proxmox's packages alone)
+pip3 install ansible proxmoxer requests
 ansible-galaxy collection install -r requirements.yml
 
 # 2. Copy and fill in secrets
@@ -74,11 +73,12 @@ cp group_vars/all/secrets.yml.example group_vars/all/secrets.yml
 
 # 3. Adjust pve.ansible_host, CTIDs, and IPs in inventory.yml
 
-# 4. Provision containers and VMs
+# 4. Provision + configure everything in one run
+ansible-playbook playbooks/site.yml
+
+# ...or run the steps individually
 ansible-playbook playbooks/provision-lxc.yml
 ansible-playbook playbooks/provision-vms.yml
-
-# 5. Configure each service
 ansible-playbook playbooks/configure-<service>.yml
 ```
 
