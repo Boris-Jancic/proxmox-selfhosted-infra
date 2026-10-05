@@ -26,6 +26,31 @@ all:
               - minio
 
             Do not edit manually.
+
+        ubuntu-vm2-cks-master:
+          id: 120
+          ansible_host: 192.168.88.120
+          memory: 2048
+          disk: 50
+          cores: 1
+          description: |
+            # ubuntu-vm1
+            Virtual machine that hosts following workloads:
+              - k8s master node
+
+            Do not edit manually.
+        ubuntu-vm3-cks-worker:
+          id: 130
+          ansible_host: 192.168.88.130
+          memory: 2048
+          disk: 50
+          cores: 1
+          description: |
+            # ubuntu-vm1
+            Virtual machine that hosts following workloads:
+              - k8s master node
+
+            Do not edit manually.
         
     lxc_containers:
       vars:
@@ -112,10 +137,6 @@ all:
             - name: cloud
               domain: "cloud.{{ cloudflare_zone }}"
               destination: http://192.168.88.110:11000
-
-            - name: nextcloud
-              domain: "nextcloud.{{ cloudflare_zone }}"
-              destination: https://192.168.88.110:8080
 
             - name: blog
               domain: "blog.{{ cloudflare_zone }}"
