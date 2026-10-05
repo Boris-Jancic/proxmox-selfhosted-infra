@@ -1,0 +1,9 @@
+---
+# Host-level config for the Proxmox node itself: node identity, root-volume
+# housekeeping, backup storage + job, metric servers. Targets the `pve`
+# inventory entry (192.168.88.10), not a guest.
+- name: Configure Proxmox host
+  hosts: pve
+  gather_facts: true
+  roles:
+    - proxmox_host

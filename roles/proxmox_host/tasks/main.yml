@@ -1,0 +1,20 @@
+---
+- name: Node identity (hostname, /etc/hosts, postfix)
+  include_tasks: hostname.yml
+  tags: [hostname]
+
+- name: Root volume housekeeping
+  include_tasks: cleanup.yml
+  tags: [cleanup]
+
+- name: Backup storage on data-hdd
+  include_tasks: backup_storage.yml
+  tags: [backup, backup-storage]
+
+- name: Scheduled backup job
+  include_tasks: backup_job.yml
+  tags: [backup, backup-job]
+
+- name: Metric servers
+  include_tasks: metrics.yml
+  tags: [metrics]

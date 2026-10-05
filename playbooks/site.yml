@@ -12,6 +12,9 @@
 - import_playbook: provision-vms.yml
   tags: [provision, vms]
 
+- import_playbook: configure-proxmox-host.yml
+  tags: [configure, proxmox-host]
+
 - import_playbook: configure-pihole.yml
   tags: [configure, pihole]
 

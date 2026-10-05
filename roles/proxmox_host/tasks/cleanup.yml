@@ -1,0 +1,26 @@
+---
+- name: Clean apt package cache
+  ansible.builtin.apt:
+    clean: true
+  changed_when: false  # apt clean always reports changed
+
+- name: Ensure journald drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Cap persistent journal size
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/size.conf
+    content: |
+      [Journal]
+      SystemMaxUse={{ journald_max_use }}
+    mode: "0644"
+  notify: Restart journald
+
+- name: Remove unused ISOs from local storage
+  ansible.builtin.file:
+    path: "/var/lib/vz/template/iso/{{ item }}"
+    state: absent
+  loop: "{{ proxmox_unused_isos }}"
