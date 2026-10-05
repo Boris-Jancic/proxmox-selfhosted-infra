@@ -23,6 +23,9 @@ ansible-playbook playbooks/provision-lxc.yml
 # Provision Ubuntu VMs (downloads cloud image, creates VM, cloud-init, waits for SSH)
 ansible-playbook playbooks/provision-vms.yml
 
+# Host-level config (backup storage/job, journald cap, metric servers)
+ansible-playbook playbooks/configure-proxmox-host.yml
+
 # Configure a single service
 ansible-playbook playbooks/configure-<service>.yml
 
@@ -75,6 +78,8 @@ Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]
 | homepage (104) | .104 | Docker compose | 3000 |
 | ubuntu-vm1 (VM 110) | .110 | Docker compose (AIO) | 8080 (admin), 11000 (Nextcloud) |
 
+The PVE node is `pve-brain` (192.168.88.10, `proxmox_node` in `group_vars/all/main.yml`). The `pve` inventory entry is just a label for that IP.
+
 ## Known gotchas
 
 - **`--check` fails for `provision-lxc.yml`** — `community.proxmox` skips itself in check mode. Run for real; existing CTs return `changed=0`.
@@ -88,6 +93,11 @@ Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]
 - **Vaultwarden**: first run needs `vaultwarden_signups_allowed: "true"` to register the first account, then flip to `"false"` and re-run.
 - **Nextcloud AIO first run**: after `configure-nextcloud.yml`, visit `https://192.168.88.110:8080` to complete setup in the AIO admin UI. `NC_DOMAIN` is pre-filled from `nextcloud_aio_domain`. `SKIP_DOMAIN_VALIDATION` is set so the reverse-proxy setup doesn't block init.
 - **docker role supports both Debian and Ubuntu** — repo URL uses `{{ ansible_distribution | lower }}` so the same role works for LXCs (Debian) and the Ubuntu VM.
+
+- **`proxmox_node` must equal the real hostname** — `roles/proxmox_host` asserts it. Guest configs live in `/etc/pve/nodes/<hostname>/`; a mismatch makes every guest vanish. Renaming a node is manual — see the runbook in `docs/proxmox-host.md`, and make `/etc/hosts` resolve the new name *before* rebooting or pmxcfs won't start.
+- **Guests all `unknown` in the UI** — `pvestatd` is failing, usually on a metric server in `/etc/pve/status.cfg` whose host no longer resolves. `roles/proxmox_host` keeps the dead `InfluxDB` entry disabled.
+- **Never write backups to `local`** — it is `/var/lib/vz` on the 40G root LV and fills it. Backups go to the `backups` storage (`/mnt/backups`, thin LV on `data-hdd`), managed by `roles/proxmox_host`. It is on the same disk as the VMs, so not disk-failure protection.
+- **Run `ansible-playbook` with stdin redirected in non-TTY shells** (`</dev/null | cat`) — otherwise it aborts with "Non-blocking file handles detected".
 
 ## Adding a new service
 

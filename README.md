@@ -58,6 +58,7 @@ External access via Cloudflare Zero Trust tunnel — no open ports on the router
 | homepage | CT 104 | .104 | 3000 | [docs/homepage.md](docs/homepage.md) |
 | portainer | VM 110 | .110 | 9000 | [docs/portainer.md](docs/portainer.md) |
 | nextcloud-aio | VM 110 | .110 | 8080 / 11000 | [docs/nextcloud.md](docs/nextcloud.md) |
+| proxmox host | node `pve-brain` | .10 | 8006 | [docs/proxmox-host.md](docs/proxmox-host.md) |
 
 ## Getting started
 
@@ -102,7 +103,7 @@ ansible-playbook playbooks/configure-<service>.yml
 ansible.cfg          Ansible config
 inventory.yml        Hosts, CTIDs, per-host vars
 group_vars/all/      main.yml (defaults), secrets.yml (gitignored)
-playbooks/           provision-lxc, provision-vms, configure-<service>
+playbooks/           provision-lxc, provision-vms, configure-<service>, configure-proxmox-host
 roles/<service>/     defaults, tasks, templates, handlers
 docs/                Per-service setup guides
 ```
