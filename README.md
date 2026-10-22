@@ -19,7 +19,7 @@ Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated
 
 | Hardware | pve-brain | pve-worker |
 |---|---|---|
-| Machine | Lenovo IdeaCentre 200-01IBW | — |
+| Machine | Lenovo IdeaCentre 200-01IBW | HP t640 Thin Client |
 | CPU | Intel i3-5005U (2C/4T) @ 1.9GHz | AMD Ryzen Embedded R1505G (2C/4T) |
 | Memory | 12GB | 13GiB usable |
 | Storage | 128GB SSD + 1TB HDD | 256GB NVMe (SK hynix BC711) |
