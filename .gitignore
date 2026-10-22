@@ -2,3 +2,12 @@ group_vars/all/secrets.yml
 *.retry
 .vault_pass
 __pycache__/
+*.vault_pass*
+.env
+.env.*
+*.pem
+*.key
+*.age
+id_*
+!id_*.pub
+.sops.age

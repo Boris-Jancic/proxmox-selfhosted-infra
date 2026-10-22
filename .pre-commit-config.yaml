@@ -1,0 +1,12 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: secrets-must-be-vaulted
+        name: secrets.yml must be ansible-vault encrypted
+        entry: bash -c 'for f in "$@"; do head -c 14 "$f" | grep -q "^\$ANSIBLE_VAULT" || { echo "$f is not vault-encrypted"; exit 1; }; done' --
+        language: system
+        files: '(^|/)(secrets|vault)\.ya?ml$'

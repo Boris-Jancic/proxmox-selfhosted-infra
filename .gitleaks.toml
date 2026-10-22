@@ -1,0 +1,30 @@
+title = "proxmox-selfhosted-infra"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cloudflare-tunnel-token"
+description = "Cloudflare Tunnel token (base64 JSON with a/t/s keys)"
+regex = '''eyJhIjoi[A-Za-z0-9+/=_-]{60,}'''
+keywords = ["eyjhijoi"]
+
+[[rules]]
+id = "proxmox-api-token-secret"
+description = "Proxmox API token secret UUID"
+regex = '''(?i)(?:token_secret|PVEAPIToken=[^=\s]+=)\s*[:=]?\s*["']?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'''
+secretGroup = 1
+keywords = ["token_secret", "pveapitoken"]
+
+[[rules]]
+id = "ansible-secret-assignment"
+description = "Plaintext secret in YAML var"
+regex = '''(?i)^\s*[a-z0-9_]*(?:password|passwd|secret|token|api_key|pat)\s*:\s*["']?([^"'\s{][^"'\s]{11,})["']?\s*$'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["password", "passwd", "secret", "token", "api_key", "pat"]
+
+[allowlist]
+description = "Placeholders"
+regexes = ['''^(?:your-|set-|changeme|CHANGE_ME|TOKEN_|PVE_USER)''', '''\$ANSIBLE_VAULT''']
+paths = ['''\.gitleaks\.toml$''']
