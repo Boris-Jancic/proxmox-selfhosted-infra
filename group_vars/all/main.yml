@@ -25,8 +25,9 @@ proxmox_api_user: "root@pam"
 # "ansible", privilege separation off. UUID secret → secrets.yml.
 proxmox_api_token_id: "ansible"
 
-# Separate read-only token used only by the homepage widget (Proxmox provisioning
-# stays on password auth above — token auth breaks LXC + local storage).
+# Separate token used only by the homepage widget, so the widget never holds the
+# Ansible provisioning token above. With privilege separation off it has root's
+# permissions, not read-only ones.
 # Create in Proxmox GUI: Datacenter → API Tokens → Add, user root@pam,
 # token ID "homepage", privilege separation off.
 proxmox_homepage_token_id: "homepage"
