@@ -76,6 +76,6 @@ curl -I https://homepage.<zone>/
 | `Server Not Found` / DNS error | No public hostname for that subdomain on this tunnel | Add it in step 3. A new tunnel starts with **zero** hostnames. |
 | `cloudflared` retry loop, high CPU | Wrong/old token | Replace `cloudflare_tunnel_token` in `secrets.yml`, re-run `configure-caddy.yml`. |
 | `control stream encountered a failure` repeating | Token belongs to a deleted/other tunnel | Recreate tunnel (step 1), new token, re-run. |
-| Subdomain works, app misbehaves (cookies/redirects) | Upstream expects HTTPS scheme | Caddy forwards `X-Forwarded-Proto`; for self-signed HTTPS upstreams set `destination: https://…` (auto `tls_insecure_skip_verify`). |
+| Subdomain works, app misbehaves (cookies/redirects) | Upstream expects HTTPS scheme | Caddy passes cloudflared's `X-Forwarded-Proto: https` (`caddy_trusted_proxies`); for self-signed HTTPS upstreams set `destination: https://…` (auto `tls_insecure_skip_verify`). |
 
 > Harmless warnings in `cloudflared` logs: `ping_group_range` (ICMP disabled in unprivileged LXC) and Caddy's `$HOME environment variable is empty`.

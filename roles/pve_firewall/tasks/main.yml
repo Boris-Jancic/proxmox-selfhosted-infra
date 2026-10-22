@@ -1,0 +1,15 @@
+---
+- name: Refuse to enable without an admin source
+  ansible.builtin.assert:
+    that: pve_fw_admin_cidrs | length > 0
+    fail_msg: >-
+      Set pve_fw_admin_cidrs (the IPs you manage the nodes from) before enabling
+      the firewall, or every node GUI/SSH outside the cluster gets dropped.
+  when: pve_fw_enabled | bool
+
+- name: Datacenter and guest rules
+  ansible.builtin.include_tasks: cluster.yml
+  when: pve_node == proxmox_node
+
+- name: Node rules and guest NIC flags
+  ansible.builtin.include_tasks: node.yml

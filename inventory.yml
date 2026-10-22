@@ -18,6 +18,15 @@ all:
           pve_node: pve-worker
           proxmox_domain: home.arpa
 
+    # External quorum vote for the two-node cluster (roles/qdevice). Must be an
+    # always-on Debian/Ubuntu box outside the cluster, e.g.:
+    #   qdevice-pi:
+    #     ansible_host: 192.168.88.5
+    qdevice:
+      vars:
+        ansible_user: root
+      hosts: {}
+
     virtual_machines:
       vars:
         ansible_user: root
@@ -39,6 +48,15 @@ all:
               - GitHub Actions runner
 
             Do not edit manually.
+          # Runs untrusted CI jobs: no path to the node GUIs/SSH.
+          firewall_out:
+            - { dest: +pve_nodes, comment: runner must not reach the nodes }
+          firewall_in:
+            - { dport: 9000, source: [caddy, +monitors, +management], comment: portainer }
+            - { dport: 9443, source: +management, comment: portainer https }
+            - { dport: 11000, source: [caddy, +monitors, +management], comment: nextcloud }
+            - { dport: 3000, source: [caddy, +management], comment: blog }
+            - { dport: "8080,8443", source: +management, comment: nextcloud aio admin }
 
         ubuntu-vm2-cks-master:
           id: 120
@@ -86,6 +104,9 @@ all:
             Active DNS query blocking
 
             Do not edit manually.
+          firewall_in:
+            - { macro: DNS, comment: any client }
+            - { dport: 80, source: [caddy, +monitors, +management], comment: admin ui + api }
 
         vaultwarden:
           ctid: 102
@@ -99,6 +120,8 @@ all:
             Manages passwords
 
             Do not edit manually.
+          firewall_in:
+            - { dport: 8080, source: [caddy, +monitors, +management] }
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
@@ -110,6 +133,8 @@ all:
           memory: 256
           disk: 12
           cores: 1
+          firewall_in:
+            - { dport: 3001, source: [caddy, +monitors, +management] }
           # Hosts docker; provision-lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
@@ -126,6 +151,8 @@ all:
           # the browser might send: LAN IP:port for direct access, plus the
           # public hostname when fronted by the Caddy reverse proxy.
           homepage_allowed_hosts: "homepage.{{ cloudflare_zone }},192.168.88.104:3000"
+          firewall_in:
+            - { dport: 3000, source: [caddy, +management] }
 
         caddy:
           ctid: 100
@@ -133,6 +160,9 @@ all:
           memory: 256
           disk: 4
           cores: 1
+          # cloudflared dials localhost; :80 from the LAN is for Homepage/Kuma checks.
+          firewall_in:
+            - { dport: 80, source: lan }
           caddy_routes:
             - name: proxmox
               domain: "proxmox.{{ cloudflare_zone }}"

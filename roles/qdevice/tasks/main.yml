@@ -1,0 +1,12 @@
+---
+- name: Skip when no qnetd host is defined
+  ansible.builtin.meta: end_role
+  when: not qdevice_host
+
+- name: Install qnetd on the external vote host
+  ansible.builtin.include_tasks: qnetd.yml
+  when: inventory_hostname == qdevice_host
+
+- name: Install qdevice on the nodes and join
+  ansible.builtin.include_tasks: node.yml
+  when: inventory_hostname in groups['proxmox_nodes']

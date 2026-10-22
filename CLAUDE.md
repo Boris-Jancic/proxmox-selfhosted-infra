@@ -74,7 +74,7 @@ All roles follow `roles/pihole/` as the canonical example:
 
 Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]`. Ansible deduplicates per play, so Docker is installed exactly once even if multiple roles depend on it.
 
-Roles: `caddy`, `pihole`, `vaultwarden`, `uptime-kuma`, `homepage`, `portainer`, `nextcloud-aio`, `github_runner`, `docker`, `ubuntu` (VM provisioning), `proxmox_host`.
+Roles: `caddy`, `pihole`, `vaultwarden`, `uptime-kuma`, `homepage`, `portainer`, `nextcloud-aio`, `github_runner`, `docker`, `ubuntu` (VM provisioning), `proxmox_host`, `pve_firewall`, `qdevice`.
 
 ### Secrets & variables
 
@@ -123,6 +123,9 @@ Two-node cluster `skylab` (group `proxmox_nodes`): `pve-brain` (192.168.88.10, i
 - **VM CPU type must be ≥ x86-64-v2** — without `cpu:` Proxmox uses `kvm64` (v1), and modern images (UBI/RHEL9 glibc, e.g. `pgsty/silo`) die with `Fatal glibc error: CPU does not support x86-64-v2`. `roles/ubuntu` sets `vm_cpu: x86-64-v2-AES` at creation only; existing VMs need `qm set <id> --cpu x86-64-v2-AES` + a full stop/start. VM 110 is done; 120/130 still run `kvm64`.
 - **Run `ansible-playbook` with stdin redirected in non-TTY shells** (`</dev/null | cat`) — otherwise it aborts with "Non-blocking file handles detected".
 
+- **PVE firewall is on, default DROP** (`roles/pve_firewall`, `docs/firewall.md`). A guest only accepts what its `firewall_in` in `inventory.yml` lists (plus SSH from `+management`, ping from LAN); a new port or a new client of an existing port needs a rule there and a re-run of `configure-firewall.yml`. Node GUI/SSH only from the `management` IPSet (nodes + `pve_fw_admin_cidrs`).
+- **Two-node quorum needs the QDevice** (`roles/qdevice`, `docs/qdevice.md`). Without it, one node down makes `/etc/pve` read-only on the other.
+
 ## Adding a new service
 
 1. Add a host entry under `lxc_containers.hosts` in `inventory.yml` (ctid, ansible_host, memory, disk, cores, `pve_node` if not pve-brain). Tag `lxc_docker_host: true` if it runs Docker.
@@ -130,4 +133,5 @@ Two-node cluster `skylab` (group `proxmox_nodes`): `pve-brain` (192.168.88.10, i
 3. Copy `roles/pihole/` shape; add `tasks/install.yml` gated with `creates:` for idempotency.
 4. Add `playbooks/configure-<service>.yml` targeting the new inventory group, and import it in `playbooks/site.yml`.
 5. Add a matching inventory group under `children:`.
-6. Add a `caddy_routes` entry on the `caddy` host in `inventory.yml`, then re-run `configure-caddy.yml`.
+6. Add `firewall_in` on the new host (its app port from `caddy`, `+monitors`, `+management`) and re-run `configure-firewall.yml`.
+7. Add a `caddy_routes` entry on the `caddy` host in `inventory.yml`, then re-run `configure-caddy.yml`.
