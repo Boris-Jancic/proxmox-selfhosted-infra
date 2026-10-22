@@ -1,41 +1,41 @@
 ---
 - name: Node identity (hostname, /etc/hosts, postfix)
-  include_tasks: hostname.yml
+  ansible.builtin.include_tasks: hostname.yml
   tags: [hostname]
 
 - name: Root volume housekeeping
-  include_tasks: cleanup.yml
+  ansible.builtin.include_tasks: cleanup.yml
   tags: [cleanup]
 
 - name: Backup storage on data-hdd
-  include_tasks: backup_storage.yml
+  ansible.builtin.include_tasks: backup_storage.yml
   when: proxmox_host_primary | bool
   tags: [backup, backup-storage]
 
 - name: Scheduled backup job
-  include_tasks: backup_job.yml
+  ansible.builtin.include_tasks: backup_job.yml
   when: proxmox_host_primary | bool
   tags: [backup, backup-job]
 
 - name: Metric servers
-  include_tasks: metrics.yml
+  ansible.builtin.include_tasks: metrics.yml
   when: proxmox_host_primary | bool
   tags: [metrics]
 
 - name: Read-only API tokens
-  include_tasks: api_tokens.yml
+  ansible.builtin.include_tasks: api_tokens.yml
   when: proxmox_host_primary | bool
   tags: [tokens]
 
 - name: APT repositories (no-subscription)
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: repos.yml
     apply:
       tags: [repos, shell]
   tags: [repos, shell]
 
 - name: Root shell environment
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: shell.yml
     apply:
       tags: [shell]

@@ -1,6 +1,6 @@
 ---
 - name: Ensure portainer install directory
-  file:
+  ansible.builtin.file:
     path: "{{ portainer_install_dir }}"
     state: directory
     owner: root
@@ -8,7 +8,7 @@
     mode: "0755"
 
 - name: Ensure portainer data directory
-  file:
+  ansible.builtin.file:
     path: "{{ portainer_data_dir }}"
     state: directory
     owner: root
@@ -16,7 +16,7 @@
     mode: "0755"
 
 - name: Render docker-compose.yml
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ portainer_install_dir }}/docker-compose.yml"
     owner: root
@@ -24,7 +24,7 @@
     mode: "0644"
 
 - name: Bring portainer stack up
-  command: docker compose up -d
+  ansible.builtin.command: docker compose up -d
   args:
     chdir: "{{ portainer_install_dir }}"
   register: compose_up

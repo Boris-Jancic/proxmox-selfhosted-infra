@@ -6,35 +6,46 @@
 #   ansible-playbook playbooks/site.yml --tags configure
 #   ansible-playbook playbooks/site.yml --tags caddy
 
-- import_playbook: provision-lxc.yml
+- name: Provision LXC containers
+  ansible.builtin.import_playbook: provision-lxc.yml
   tags: [provision, lxc]
 
-- import_playbook: provision-vms.yml
+- name: Provision VMs
+  ansible.builtin.import_playbook: provision-vms.yml
   tags: [provision, vms]
 
-- import_playbook: configure-proxmox-host.yml
+- name: Configure Proxmox nodes
+  ansible.builtin.import_playbook: configure-proxmox-host.yml
   tags: [configure, proxmox-host]
 
-- import_playbook: configure-pihole.yml
+- name: Configure Pi-hole
+  ansible.builtin.import_playbook: configure-pihole.yml
   tags: [configure, pihole]
 
-- import_playbook: configure-vaultwarden.yml
+- name: Configure Vaultwarden
+  ansible.builtin.import_playbook: configure-vaultwarden.yml
   tags: [configure, vaultwarden]
 
-- import_playbook: configure-uptime-kuma.yml
+- name: Configure Uptime Kuma
+  ansible.builtin.import_playbook: configure-uptime-kuma.yml
   tags: [configure, uptime-kuma]
 
-- import_playbook: configure-homepage.yml
+- name: Configure Homepage
+  ansible.builtin.import_playbook: configure-homepage.yml
   tags: [configure, homepage]
 
-- import_playbook: configure-portainer.yml
+- name: Configure Portainer
+  ansible.builtin.import_playbook: configure-portainer.yml
   tags: [configure, portainer]
 
-- import_playbook: configure-github-runner.yml
+- name: Configure GitHub runner
+  ansible.builtin.import_playbook: configure-github-runner.yml
   tags: [configure, github-runner]
 
-- import_playbook: configure-nextcloud.yml
+- name: Configure Nextcloud AIO
+  ansible.builtin.import_playbook: configure-nextcloud.yml
   tags: [configure, nextcloud]
 
-- import_playbook: configure-caddy.yml
+- name: Configure Caddy
+  ansible.builtin.import_playbook: configure-caddy.yml
   tags: [configure, caddy]

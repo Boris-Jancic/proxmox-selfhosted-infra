@@ -1,6 +1,6 @@
 ---
 - name: Ensure caddy config directory
-  file:
+  ansible.builtin.file:
     path: "{{ caddy_config_dir }}"
     state: directory
     owner: root
@@ -8,10 +8,10 @@
     mode: "0750"
 
 - name: Render Caddyfile
-  template:
+  ansible.builtin.template:
     src: Caddyfile.j2
     dest: "{{ caddy_config_dir }}/Caddyfile"
     owner: root
     group: root
     mode: "0640"
-  notify: restart caddy
+  notify: Restart caddy

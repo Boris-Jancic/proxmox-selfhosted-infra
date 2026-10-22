@@ -10,6 +10,7 @@
     pvesh set /cluster/metrics/server/{{ item.id }}
     --server {{ item.server }} --port {{ item.port }} --disable 1
   loop: "{{ metric_servers_raw.stdout | from_json | selectattr('id', 'in', proxmox_disabled_metric_servers) | list }}"
+  changed_when: true
   when: (item.disable | default(0) | int) != 1
   loop_control:
     label: "{{ item.id }}"

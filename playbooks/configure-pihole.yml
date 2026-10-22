@@ -1,6 +1,6 @@
 ---
 - name: Install / Configure pi-hole
-  hosts: 
+  hosts:
     - pi-hole
   gather_facts: true
   roles:

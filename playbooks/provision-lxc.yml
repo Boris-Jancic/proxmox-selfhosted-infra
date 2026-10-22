@@ -105,7 +105,7 @@
     # the new profile on next start anyway).
     - name: Reboot docker-host CTs whose AppArmor profile changed
       ansible.builtin.shell: |
-        if pct status {{ hostvars[item.item].ctid }} | grep -q running; then
+        if [ "$(pct status {{ hostvars[item.item].ctid }})" = "status: running" ]; then
           pct reboot {{ hostvars[item.item].ctid }}
         fi
       loop: "{{ docker_host_overrides.results }}"

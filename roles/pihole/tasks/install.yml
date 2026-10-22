@@ -1,6 +1,6 @@
 ---
 - name: Install runtime deps for the pi-hole installer
-  apt:
+  ansible.builtin.apt:
     name:
       - curl
       - ca-certificates
@@ -8,7 +8,7 @@
     update_cache: true
 
 - name: Ensure /etc/pihole exists
-  file:
+  ansible.builtin.file:
     path: /etc/pihole
     state: directory
     owner: root
@@ -16,7 +16,7 @@
     mode: "0755"
 
 - name: Stage setupVars.conf as preseed for unattended install
-  template:
+  ansible.builtin.template:
     src: setupVars.conf.j2
     dest: /etc/pihole/setupVars.conf
     owner: root
@@ -24,7 +24,7 @@
     mode: "0644"
 
 - name: Run pi-hole unattended installer
-  shell: |
+  ansible.builtin.shell: |
     set -o pipefail
     curl -sSL https://install.pi-hole.net | PIHOLE_SKIP_OS_CHECK=true bash /dev/stdin --unattended
   args:

@@ -1,3 +1,4 @@
+---
 all:
   children:
     # Cluster `skylab`. Every guest below carries `pve_node` (default:
@@ -68,7 +69,7 @@ all:
               - k8s worker node
 
             Do not edit manually.
-        
+
     lxc_containers:
       vars:
         ansible_user: root
@@ -165,5 +166,3 @@ all:
             - name: vaultwarden
               domain: "vaultwarden.{{ cloudflare_zone }}"
               destination: http://192.168.88.102:8080
-
-

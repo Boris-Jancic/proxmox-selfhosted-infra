@@ -43,6 +43,18 @@ ansible-playbook playbooks/configure-caddy.yml --limit caddy
 
 If `secrets.yml` is vault-encrypted, append `--ask-vault-pass` to any command above.
 
+### Lint (CI gate)
+
+`.github/workflows/ansible-lint.yml` runs on every push/PR on GitHub-hosted runners: `yamllint --strict`, `ansible-lint` (`production` profile, config in `.ansible-lint`), and `ansible-playbook --syntax-check` on every playbook. Tool versions are pinned in `requirements-ci.txt` (`ansible-core` matches pve-brain). Same checks locally:
+
+```bash
+pip install -r requirements-ci.txt && ansible-galaxy collection install -r requirements.yml
+yamllint --strict . && ansible-lint
+for pb in playbooks/*.yml; do ansible-playbook --syntax-check "$pb" </dev/null; done
+```
+
+No `--check` in CI: hosted runners can't reach 192.168.88.x, and the only self-hosted runner is scoped to `nextjs-blog`. A runner for this public repo would need root SSH to both nodes, so don't add one. Commands gated by `when:` use `changed_when: true`; handler names are capitalised and `notify:` must match exactly (case-sensitive).
+
 ## Architecture
 
 Two distinct play types — never mix them:

@@ -14,7 +14,7 @@
   gather_facts: false
   tasks:
     - name: Wait for SSH port on each VM
-      wait_for:
+      ansible.builtin.wait_for:
         host: "{{ hostvars[item].ansible_host }}"
         port: 22
         timeout: 300
@@ -28,12 +28,12 @@
   gather_facts: true
   tasks:
     - name: Update apt cache
-      apt:
+      ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
 
     - name: Install base packages
-      apt:
+      ansible.builtin.apt:
         name:
           - qemu-guest-agent
           - curl
@@ -42,7 +42,7 @@
         state: present
 
     - name: Enable and start QEMU guest agent
-      systemd:
+      ansible.builtin.systemd:
         name: qemu-guest-agent
         enabled: true
         state: started

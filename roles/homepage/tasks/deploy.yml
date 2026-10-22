@@ -1,6 +1,6 @@
 ---
 - name: Ensure homepage install directory
-  file:
+  ansible.builtin.file:
     path: "{{ homepage_install_dir }}"
     state: directory
     owner: root
@@ -8,7 +8,7 @@
     mode: "0755"
 
 - name: Ensure homepage config directory
-  file:
+  ansible.builtin.file:
     path: "{{ homepage_config_dir }}"
     state: directory
     owner: root
@@ -18,7 +18,7 @@
 # `no_log` hides the rendered HOMEPAGE_VAR_PIHOLE_KEY from ansible output.
 # Mode 0600 so only root on the CT can read the file.
 - name: Render docker-compose.yml
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ homepage_install_dir }}/docker-compose.yml"
     owner: root
@@ -30,7 +30,7 @@
 # container after these. The compose-up task below only recreates when its
 # *own* inputs (image, env, mounts) change.
 - name: Render homepage config files
-  template:
+  ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "{{ homepage_config_dir }}/{{ item }}"
     owner: root
@@ -47,7 +47,7 @@
 # container is left alone. We surface ansible-changed only when compose
 # actually started or recreated something.
 - name: Bring homepage stack up
-  command: docker compose up -d
+  ansible.builtin.command: docker compose up -d
   args:
     chdir: "{{ homepage_install_dir }}"
   register: compose_up
