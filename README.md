@@ -17,7 +17,12 @@ Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated
 | `pve-brain` (primary) | .10 | Ansible controller, storage + edge: caddy, pi-hole, Nextcloud/Portainer VM, backups | `local-lvm` (SSD) + `data-hdd` (1TB HDD) |
 | `pve-worker` | .20 | Compute: vaultwarden, uptime-kuma, homepage, k8s VMs | `local-lvm` (NVMe) |
 
-**pve-brain hardware:** Lenovo IdeaCentre 200-01IBW, Intel i3-5005U (4) @ 1.9GHz, 12GB RAM, 128GB SSD + 1TB HDD.
+| Hardware | pve-brain | pve-worker |
+|---|---|---|
+| Machine | Lenovo IdeaCentre 200-01IBW | — |
+| CPU | Intel i3-5005U (2C/4T) @ 1.9GHz | AMD Ryzen Embedded R1505G (2C/4T) |
+| Memory | 12GB | 13GiB usable |
+| Storage | 128GB SSD + 1TB HDD | 256GB NVMe (SK hynix BC711) |
 
 Each guest's node is set by `pve_node` in `inventory.yml`. See [docs/proxmox-host.md](docs/proxmox-host.md).
 
