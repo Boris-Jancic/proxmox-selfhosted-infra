@@ -18,22 +18,28 @@ background:
 cardBlur: sm
 useEqualHeights: true
 
-headerStyle: clean
+# boxedWidgets renders each header widget (resources / search / clock) in its
+# own card so they line up evenly instead of floating at different heights.
+headerStyle: boxedWidgets
 target: _blank
 
+# Column layout: each group renders as a vertical column, groups sit side
+# by side. `columns` is not used with style: column.
+# 5 even columns: Infrastructure(4) · Apps(4) · Today(calendar) · Admin(4) · Social(4).
+fiveColumns: true
 layout:
   Infrastructure:
-    style: row
-    columns: 4
+    style: column
+    icon: mdi-server
   Apps:
-    style: row
-    columns: 3
+    style: column
+    icon: mdi-apps
+  Today:
+    style: column
+    icon: mdi-calendar
   Admin:
-    style: row
-    columns: 2
-  Repo:
-    style: row
-    columns: 1
+    style: column
+    icon: mdi-shield-account
   Social:
-    style: row
-    columns: 4
+    style: column
+    icon: mdi-account-group

@@ -1,0 +1,19 @@
+---
+# No subscription: the enterprise repos answer 401 and break every apt update.
+# Disable them in place (deb822 `Enabled: false`) so PVE upgrades don't
+# recreate them; pve-no-subscription is configured by the installer.
+- name: Check for enterprise repo files
+  ansible.builtin.stat:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+  loop: "{{ proxmox_enterprise_repo_files }}"
+  register: enterprise_repos
+
+- name: Disable enterprise repos
+  ansible.builtin.lineinfile:
+    path: "{{ item.stat.path }}"
+    regexp: '^Enabled:'
+    line: "Enabled: false"
+    insertbefore: BOF
+  loop: "{{ enterprise_repos.results | selectattr('stat.exists') | list }}"
+  loop_control:
+    label: "{{ item.item }}"

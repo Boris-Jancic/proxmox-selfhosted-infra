@@ -4,7 +4,7 @@ Nextcloud All-in-One runs the mastercontainer which spawns and manages all Nextc
 
 - **VM:** 110 | **IP:** 192.168.88.110
 - **AIO admin UI:** `https://192.168.88.110:8080` (direct, not via proxy)
-- **Nextcloud:** `https://cloud.{{ cloudflare_zone }}` (via nginx-proxy → port 11000)
+- **Nextcloud:** `https://cloud.{{ cloudflare_zone }}` (via Caddy → port 11000)
 
 ## Secrets
 
@@ -23,7 +23,7 @@ Defaults in `roles/nextcloud-aio/defaults/main.yml`.
 | `nextcloud_aio_image` | `nextcloud/all-in-one:latest` | Mastercontainer image |
 | `nextcloud_aio_data_dir` | `/mnt/nextcloud-data` | Host path for all Nextcloud data |
 | `nextcloud_aio_admin_port` | `8080` | AIO admin UI port |
-| `nextcloud_aio_apache_port` | `11000` | Nextcloud Apache port (proxied by nginx) |
+| `nextcloud_aio_apache_port` | `11000` | Nextcloud Apache port (proxied by Caddy) |
 | `nextcloud_aio_domain` | `cloud.{{ cloudflare_zone }}` | Public Nextcloud domain |
 | `nextcloud_aio_skip_domain_validation` | `true` | Skip AIO domain check (required for reverse-proxy setup) |
 
@@ -55,4 +55,4 @@ https://192.168.88.110:8080
 - VM must exist first — provision with `ansible-playbook playbooks/provision-vms.yml`.
 - Data dir (`/mnt/nextcloud-data`) must exist on the VM before first run; the role does not create it.
 - AIO spawns its own containers — do not manage them with `docker compose` directly.
-- nginx-proxy needs two vhosts: `cloud.*` → port 11000 and `nextcloud.*` → port 8080 (with `backend_ssl: true`).
+- Caddy needs two vhosts: `cloud.*` → port 11000 and `nextcloud.*` → port 8080 (with `backend_ssl: true`).

@@ -1,0 +1,72 @@
+---
+# Node identity. `pve_node` (set on each node entry in inventory.yml) must equal
+# the host's real hostname — guest configs live under /etc/pve/nodes/<hostname>/.
+# proxmox_domain is per node in inventory.yml; this is only the fallback.
+proxmox_domain: bong
+proxmox_host_ip: "{{ ansible_host }}"
+
+# The primary node (proxmox_node) owns the data-hdd backup storage, and runs
+# the cluster-wide tasks (backup job, metric servers) so they apply once.
+proxmox_host_primary: "{{ pve_node == proxmox_node }}"
+
+# --- Root volume housekeeping (the root LV is only ~40G) ---
+journald_max_use: 200M
+
+# ISOs/templates in local:iso to delete. Empty by default so nothing is removed
+# unless asked. Previously removed: kali-linux-2025.3-installer-amd64.iso,
+# ubuntu-24.04.3-live-server-amd64.iso.
+proxmox_unused_isos: []
+
+# --- Backup storage ---
+# Backups go to a thin LV carved from the data-hdd pool, NOT the 40G root LV
+# (`local` storage lives on root and filled it up).
+backup_vg: data-hdd
+backup_thinpool: data
+backup_lv: backups
+backup_lv_size: 200g
+backup_fs_label: pvebackups
+backup_mount: /mnt/backups
+backup_storage_id: backups
+backup_keep_last: 2
+
+# --- Scheduled backup job ---
+backup_job_id: backup-ce63a726-7399
+backup_job_schedule: "sun 01:00"
+# Comma-separated VMIDs. Only the Nextcloud/Portainer VM by default; add
+# "100,101,102,103,104,120,130" to cover everything else.
+backup_job_vmids: "110"
+backup_job_mode: snapshot
+backup_job_compress: zstd
+
+# --- Metric servers to keep disabled ---
+# The InfluxDB entry pointed at a host that does not exist; with it enabled
+# pvestatd errors every cycle and every guest shows status "unknown".
+proxmox_disabled_metric_servers:
+  - InfluxDB
+
+# --- APT repos ---
+# deb822 files under /etc/apt/sources.list.d/ to disable (no subscription).
+proxmox_enterprise_repo_files:
+  - pve-enterprise.sources
+
+# --- Root shell (bash completion, colors, Proxmox prompt + login banner) ---
+shell_packages:
+  - bash-completion
+  - fzf
+  - git
+  - python3-argcomplete
+shell_editor: nvim
+# Prepended to PATH when the directory exists.
+shell_extra_path:
+  - /root/.local/bin
+  - /opt/nvim-linux-x86_64/bin
+# Enables the `ap <playbook>` helper on nodes where the repo is checked out.
+homelab_repo_dir: /root/proxmox-homelab
+shell_ansible_completion_cmds:
+  - ansible
+  - ansible-playbook
+  - ansible-inventory
+  - ansible-doc
+  - ansible-galaxy
+  - ansible-vault
+  - ansible-config

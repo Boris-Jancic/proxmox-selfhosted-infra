@@ -1,9 +1,12 @@
 ---
+# API calls run on the controller (localhost); qm/file tasks need the disk and
+# image on the VM's own node, so they are delegated to `pve_node_host`.
 - name: Download Ubuntu cloud image
   get_url:
     url: "{{ ubuntu_cloud_image_url }}"
     dest: "{{ ubuntu_cloud_image_dest }}"
     mode: "0644"
+  delegate_to: "{{ pve_node_host }}"
 
 # state=present is idempotent — returns changed=false if VM already exists.
 # All disk/cloud-init setup is gated on vm_create.changed so re-runs are no-ops.
@@ -14,22 +17,25 @@
     api_token_id: "{{ proxmox_api_token_id }}"
     api_token_secret: "{{ proxmox_api_token_secret }}"
     validate_certs: false
-    node: "{{ proxmox_node }}"
+    node: "{{ pve_node }}"
     vmid: "{{ vm_id }}"
     name: "{{ vm_name }}"
     memory: "{{ vm_memory }}"
     cores: "{{ vm_cores }}"
+    cpu: "{{ vm_cpu }}"
     net:
       net0: "virtio,bridge={{ ubuntu_bridge }}"
     onboot: true
     state: present
+  delegate_to: localhost
   register: vm_create
 
 - name: Import cloud image as disk
   command: >
     qm importdisk {{ vm_id }}
     {{ ubuntu_cloud_image_dest }}
-    {{ proxmox_storage }}
+    {{ vm_storage }}
+  delegate_to: "{{ pve_node_host }}"
   when: vm_create.changed
 
 # Write pubkey to temp file — qm set --sshkeys requires a file path.
@@ -38,13 +44,14 @@
     content: "{{ controller_ssh_pubkey }}\n"
     dest: /tmp/ansible_vm_sshkey.pub
     mode: "0600"
+  delegate_to: "{{ pve_node_host }}"
   when: vm_create.changed
 
 - name: Attach disk, configure cloud-init, serial console, QEMU agent
   command: >
     qm set {{ vm_id }}
-    --virtio0 {{ proxmox_storage }}:vm-{{ vm_id }}-disk-0,discard=on
-    --ide2 {{ proxmox_storage }}:cloudinit
+    --virtio0 {{ vm_storage }}:vm-{{ vm_id }}-disk-0,discard=on
+    --ide2 {{ vm_storage }}:cloudinit
     --boot order=virtio0
     --vga std
     --agent enabled=1
@@ -53,16 +60,19 @@
     --sshkeys /tmp/ansible_vm_sshkey.pub
     --ipconfig0 ip={{ vm_ip }}{{ network_prefix }},gw={{ network_gateway }}
     --nameserver {{ network_gateway }}
+  delegate_to: "{{ pve_node_host }}"
   when: vm_create.changed
 
 - name: Remove temp SSH pubkey file
   file:
     path: /tmp/ansible_vm_sshkey.pub
     state: absent
+  delegate_to: "{{ pve_node_host }}"
   when: vm_create.changed
 
 - name: Resize disk to {{ vm_disk }}G
   command: qm disk resize {{ vm_id }} virtio0 {{ vm_disk }}G
+  delegate_to: "{{ pve_node_host }}"
   when: vm_create.changed
 
 - name: Start VM
@@ -72,6 +82,7 @@
     api_token_id: "{{ proxmox_api_token_id }}"
     api_token_secret: "{{ proxmox_api_token_secret }}"
     validate_certs: false
-    node: "{{ proxmox_node }}"
+    node: "{{ pve_node }}"
     vmid: "{{ vm_id }}"
     state: started
+  delegate_to: localhost

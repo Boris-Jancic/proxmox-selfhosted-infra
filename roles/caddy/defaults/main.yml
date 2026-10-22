@@ -1,0 +1,20 @@
+---
+caddy_version: "2.9.1"
+caddy_binary_url: "https://github.com/caddyserver/caddy/releases/download/v{{ caddy_version }}/caddy_{{ caddy_version }}_linux_amd64.tar.gz"
+
+caddy_config_dir: /etc/caddy
+caddy_log_level: INFO
+
+# Routes rendered into Caddyfile. Each entry:
+#   name              required  used as label
+#   domain            required  Caddy site address (Host-based routing)
+#   destination       required  upstream URL (http:// or https://)
+#   redirect_root_to  optional  301 / → subpath (e.g. /admin/)
+#   backend_ssl       optional  force tls_insecure_skip_verify; auto-set
+#                               when destination starts with https://
+caddy_routes: []
+
+caddy_security_headers_enabled: true
+caddy_sts_seconds: 31536000
+
+cloudflared_config_dir: /etc/cloudflared

@@ -1,0 +1,6 @@
+---
+- name: Install and configure caddy
+  hosts: caddy
+  gather_facts: true
+  roles:
+    - caddy

@@ -1,5 +1,5 @@
 # Managed by Ansible (roles/homepage/templates/services.yaml.j2).
-# User-facing `href` links go through nginx-proxy at <sub>.{{ cloudflare_zone }}
+# User-facing `href` links go through Caddy at <sub>.{{ cloudflare_zone }}
 # so external (Cloudflare-proxied) and LAN access both work.
 # Widget `url` fields stay on internal IPs — the homepage container talks to
 # them directly so DNS/Cloudflare round-trips don't slow widget refreshes.
@@ -7,23 +7,37 @@
 # Widget secrets use homepage's HOMEPAGE_VAR_* env-var substitution so
 # secrets.yml values never land in this file. The compose template wires the
 # env vars in.
+{# Cloudflare tunnel token is base64 JSON {a: account id, t: tunnel id, s: secret};
+   decode it so the cloudflared widget needs no extra inventory vars. #}
+{% set _cf_pad = (4 - (cloudflare_tunnel_token | length) % 4) % 4 %}
+{% set _cf_tunnel = (cloudflare_tunnel_token ~ ('=' * _cf_pad)) | b64decode | from_json %}
 
 - Infrastructure:
-    - Proxmox:
+{# One card per cluster node; the cluster UI behind the href shows all of them. #}
+{% for n in groups['proxmox_nodes'] %}
+    - Proxmox {{ hostvars[n].pve_node }}:
         href: https://proxmox.{{ cloudflare_zone }}/
-        description: PVE node management
+        description: PVE node · {{ hostvars[n].ansible_host }}
         icon: proxmox.png
+        siteMonitor: https://{{ hostvars[n].ansible_host }}:8006
+        # Token needs PVEAuditor on / (propagate) or CPU/mem render as NaN:
+        #   pveum acl modify / --tokens 'root@pam!homepage' --roles PVEAuditor
         widget:
           type: proxmox
-          url: https://{{ hostvars['pve'].ansible_host }}:8006
+          url: https://{{ hostvars[n].ansible_host }}:8006
           username: "{{ proxmox_api_user }}!{{ proxmox_homepage_token_id }}"
           password: '{% raw %}{{HOMEPAGE_VAR_PROXMOX_PASSWORD}}{% endraw %}'
-          node: "{{ proxmox_node }}"
+          node: "{{ hostvars[n].pve_node }}"
 
+{% endfor %}
     - Pi-hole:
         href: https://pihole.{{ cloudflare_zone }}/admin/
-        description: DNS + ad-block
+        description: DNS + ad-block · CT {{ hostvars['pi-hole'].ctid }}
         icon: pi-hole.png
+        # Pi-hole's embedded web server (CivetWeb) trips homepage's monitor
+        # proxy on any path ("Parse Error: Data after Connection: close"),
+        # so probe reachability with ICMP instead of HTTP.
+        ping: {{ hostvars['pi-hole'].ansible_host }}
         widget:
           type: pihole
           url: http://{{ hostvars['pi-hole'].ansible_host }}
@@ -34,19 +48,35 @@
           # web admin password or an app-password from /admin > Settings > API.
           key: '{% raw %}{{HOMEPAGE_VAR_PIHOLE_KEY}}{% endraw %}'
 
-    - Nginx Proxy:
+    - Caddy:
         # No public vhost — admin of the proxy itself stays on the LAN IP.
-        href: http://{{ hostvars['nginx-proxy'].ansible_host }}/
-        description: Reverse proxy (manual config)
-        icon: nginx.png
+        href: http://{{ hostvars['caddy'].ansible_host }}/
+        description: Reverse proxy + CF tunnel · CT {{ hostvars['caddy'].ctid }}
+        icon: caddy.png
+        siteMonitor: http://{{ hostvars['caddy'].ansible_host }}/
+{% if cloudflare_api_token is defined %}
+        # Tunnel health straight from the Cloudflare API; account/tunnel ids
+        # are decoded from cloudflare_tunnel_token above.
+        widget:
+          type: cloudflared
+          accountid: {{ _cf_tunnel.a }}
+          tunnelid: {{ _cf_tunnel.t }}
+          key: '{% raw %}{{HOMEPAGE_VAR_CLOUDFLARED_KEY}}{% endraw %}'
+{% else %}
+        # Cloudflare tunnel widget disabled: create an API token at
+        # dash.cloudflare.com → My Profile → API Tokens with permission
+        # `Account → Cloudflare Tunnel → Read`, save it in secrets.yml as
+        # `cloudflare_api_token`, then re-run configure-homepage.yml.
+{% endif %}
 
     - Portainer:
         href: https://portainer.{{ cloudflare_zone }}/
-        description: Docker container manager
+        description: Docker manager · VM {{ hostvars['ubuntu-vm1'].id }}
         icon: portainer.png
         # env ID: Portainer → Environments → URL shows /#!/endpoints/<id>.
         # Set `portainer_env_id` in homepage defaults or inventory to match.
         # API token: Account → Access Tokens → add to secrets.yml as `portainer_api_key`.
+        siteMonitor: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:9000
         widget:
           type: portainer
           url: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:9000
@@ -54,28 +84,56 @@
           key: '{% raw %}{{HOMEPAGE_VAR_PORTAINER_KEY}}{% endraw %}'
 
 - Apps:
+    - Blog:
+        href: https://blog.{{ cloudflare_zone }}/
+        description: Personal website
+        icon: mdi-post-outline
+        siteMonitor: https://blog.{{ cloudflare_zone }}/
+
     - Vaultwarden:
-        href: https://vaultwarden.{{ cloudflare_zone }}/
-        description: Password manager
+        # Deliberately LAN-only on the dashboard — no public URL advertised.
+        href: http://{{ hostvars['vaultwarden'].ansible_host }}:8080/
+        description: Password manager · CT {{ hostvars['vaultwarden'].ctid }}
         icon: vaultwarden.png
+        siteMonitor: http://{{ hostvars['vaultwarden'].ansible_host }}:8080/
 
     - Uptime Kuma:
         href: https://kuma.{{ cloudflare_zone }}/
-        description: Service uptime monitor
+        description: Uptime monitor · CT {{ hostvars['uptime-kuma'].ctid }}
         icon: uptime-kuma.png
-        # Uncomment once you've created an API key in Uptime Kuma settings,
-        # added it to secrets.yml as `uptime_kuma_api_key`, and exposed it
-        # via HOMEPAGE_VAR_UPTIMEKUMA_KEY in the compose template.
-        # widget:
-        #   type: uptimekuma
-        #   url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
-        #   slug: <status-page-slug>
+        siteMonitor: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001/
+        # Widget reads the "pve" status page (kuma.<zone>/status/pve) over LAN.
+        widget:
+          type: uptimekuma
+          url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
+          slug: pve
 
     - Nextcloud:
-        href: https://nextcloud.{{ cloudflare_zone }}/
-        description: File storage + sync
+        # LAN link to the app itself (AIO serves Nextcloud on :11000).
+        # Public AIO-admin route was removed from Caddy on purpose.
+        href: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:11000/
+        description: Files + sync · VM {{ hostvars['ubuntu-vm1'].id }}
         icon: nextcloud.png
+        # status.php answers 200 on the LAN IP; / redirects to the public
+        # https domain, which homepage's monitor proxy refuses to follow.
+        siteMonitor: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:11000/status.php
         # widget:
         #   type: nextcloud
-        #   url: https://nextcloud.{{ cloudflare_zone }}
+        #   url: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:11000
         #   key: '{% raw %}{{HOMEPAGE_VAR_NEXTCLOUD_KEY}}{% endraw %}'
+
+- Today:
+    - Calendar:
+        icon: mdi-calendar-month
+        widget:
+          type: calendar
+          view: monthly
+          maxEvents: 10
+          showTime: true
+          # Feed it ical URLs to show real events, e.g. a Nextcloud calendar:
+          # Nextcloud → Calendar → ... → copy private link, append ?export
+          # integrations:
+          #   - type: ical
+          #     url: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:11000/remote.php/dav/public-calendars/<token>?export
+          #     name: personal
+          #     color: blue

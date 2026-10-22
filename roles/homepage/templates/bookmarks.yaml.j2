@@ -1,10 +1,5 @@
 # Managed by Ansible (roles/homepage/templates/bookmarks.yaml.j2).
-
-- Repo:
-    - Homelab IaC:
-        - href: https://github.com/Boris-Jancic/proxmox-homelab
-          icon: github.png
-          description: This homelab's Ansible repo
+# LAN-only consoles that don't warrant a full service card live here.
 
 - Admin:
     - Proxmox:
@@ -15,12 +10,23 @@
         - href: http://{{ hostvars['pi-hole'].ansible_host }}/admin
           icon: pi-hole.png
           description: DNS + ad-block console
+    - Nextcloud AIO:
+        - href: https://{{ hostvars['ubuntu-vm1'].ansible_host }}:8080/
+          icon: nextcloud.png
+          description: AIO master container admin
+    - Cloudflare:
+        - href: https://dash.cloudflare.com/
+          icon: cloudflare.png
+          description: DNS zone + tunnel dashboard
 
 - Social:
     - GitHub:
         - href: https://github.com/Boris-Jancic
           icon: github.png
           description: Profile
+        - href: https://github.com/Boris-Jancic/proxmox-homelab
+          icon: github.png
+          description: This homelab's Ansible repo
     - YouTube:
         - href: https://www.youtube.com
           icon: youtube.png

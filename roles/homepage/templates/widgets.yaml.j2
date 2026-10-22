@@ -1,12 +1,20 @@
 # Managed by Ansible (roles/homepage/templates/widgets.yaml.j2).
 
+# Live CPU / RAM / disk / uptime of the homepage CT itself.
+- resources:
+    label: homepage CT
+    cpu: true
+    memory: true
+    disk: /
+    uptime: true
+
+- search:
+    provider: duckduckgo
+    target: _blank
+
 - datetime:
     text_size: xl
     locale: en
     format:
       timeStyle: short
-      dateStyle: long
-
-- search:
-    provider: duckduckgo
-    target: _blank
+      dateStyle: full

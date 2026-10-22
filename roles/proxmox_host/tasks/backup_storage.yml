@@ -1,0 +1,38 @@
+---
+- name: Create thin LV for backups
+  community.general.lvol:
+    vg: "{{ backup_vg }}"
+    lv: "{{ backup_lv }}"
+    thinpool: "{{ backup_thinpool }}"
+    size: "{{ backup_lv_size }}"
+
+- name: Create ext4 filesystem on backup LV
+  community.general.filesystem:
+    fstype: ext4
+    dev: "/dev/{{ backup_vg }}/{{ backup_lv }}"
+    opts: "-m0 -L {{ backup_fs_label }}"
+
+- name: Mount backup LV (persisted in fstab, nofail)
+  ansible.posix.mount:
+    path: "{{ backup_mount }}"
+    src: "LABEL={{ backup_fs_label }}"
+    fstype: ext4
+    opts: defaults,nofail
+    passno: 2
+    state: mounted
+
+- name: Check whether the PVE storage exists
+  ansible.builtin.command: pvesm status --storage {{ backup_storage_id }}
+  register: backup_storage_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Add backup directory storage to PVE
+  ansible.builtin.command: >-
+    pvesm add dir {{ backup_storage_id }}
+    --path {{ backup_mount }}
+    --content backup
+    --is_mountpoint yes
+    --prune-backups keep-last={{ backup_keep_last }}
+  when: backup_storage_status.rc != 0

@@ -1,0 +1,6 @@
+---
+- name: Install and register GitHub Actions self-hosted runner
+  hosts: ubuntu-vm1
+  gather_facts: true
+  roles:
+    - github_runner

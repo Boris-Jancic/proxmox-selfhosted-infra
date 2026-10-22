@@ -1,0 +1,51 @@
+---
+# Root's interactive shell: completion, colors, fzf, Proxmox-aware prompt and
+# login banner (roles/proxmox_host/files/pve.bash). Only touches root's dotfiles.
+- name: Install shell packages
+  ansible.builtin.apt:
+    name: "{{ shell_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Deploy ~/.bashrc
+  ansible.builtin.template:
+    src: bashrc.j2
+    dest: /root/.bashrc
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Create ~/.bashrc.d
+  ansible.builtin.file:
+    path: /root/.bashrc.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Proxmox shell helpers
+  ansible.builtin.copy:
+    src: pve.bash
+    dest: /root/.bashrc.d/pve.bash
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Check for ansible-playbook
+  ansible.builtin.command: which ansible-playbook
+  register: shell_ansible_bin
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# ansible's CLIs are argcomplete-enabled; a static file avoids spawning
+# python for every shell start.
+- name: Generate ansible bash completion
+  ansible.builtin.shell: >-
+    register-python-argcomplete {{ shell_ansible_completion_cmds | join(' ') }}
+    > /etc/bash_completion.d/ansible
+  args:
+    creates: /etc/bash_completion.d/ansible
+  when: shell_ansible_bin.rc == 0

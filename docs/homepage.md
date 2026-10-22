@@ -3,7 +3,7 @@
 Self-hosted start page / service dashboard. Runs as a Docker Compose service.
 
 - **CT:** 104 | **IP:** 192.168.88.104 | **Port:** 3000
-- **Public URL:** `https://homepage.{{ cloudflare_zone }}` (via nginx-proxy)
+- **Public URL:** `https://homepage.{{ cloudflare_zone }}` (via Caddy)
 
 ## Variables
 

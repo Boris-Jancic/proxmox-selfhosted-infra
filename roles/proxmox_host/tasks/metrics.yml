@@ -1,0 +1,15 @@
+---
+- name: Read configured metric servers
+  ansible.builtin.command: pvesh get /cluster/metrics/server --output-format json
+  register: metric_servers_raw
+  changed_when: false
+  check_mode: false
+
+- name: Disable dead metric servers
+  ansible.builtin.command: >-
+    pvesh set /cluster/metrics/server/{{ item.id }}
+    --server {{ item.server }} --port {{ item.port }} --disable 1
+  loop: "{{ metric_servers_raw.stdout | from_json | selectattr('id', 'in', proxmox_disabled_metric_servers) | list }}"
+  when: (item.disable | default(0) | int) != 1
+  loop_control:
+    label: "{{ item.id }}"

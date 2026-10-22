@@ -1,0 +1,40 @@
+---
+- name: Read existing backup jobs
+  ansible.builtin.command: pvesh get /cluster/backup --output-format json
+  register: backup_jobs_raw
+  changed_when: false
+  check_mode: false
+
+- name: Find this backup job
+  ansible.builtin.set_fact:
+    backup_job_current: "{{ (backup_jobs_raw.stdout | from_json | selectattr('id', 'equalto', backup_job_id) | list | first) | default({}) }}"
+
+- name: Create backup job
+  ansible.builtin.command: >-
+    pvesh create /cluster/backup
+    --id {{ backup_job_id }}
+    --schedule '{{ backup_job_schedule }}'
+    --storage {{ backup_storage_id }}
+    --vmid {{ backup_job_vmids }}
+    --mode {{ backup_job_mode }}
+    --compress {{ backup_job_compress }}
+    --prune-backups keep-last={{ backup_keep_last }}
+    --notes-template '{{ '{{guestname}}' }}'
+    --enabled 1
+  when: backup_job_current == {}
+
+# Repoints an existing job (e.g. one still writing to `local`) at the backup storage.
+- name: Update backup job if it drifted
+  ansible.builtin.command: >-
+    pvesh set /cluster/backup/{{ backup_job_id }}
+    --schedule '{{ backup_job_schedule }}'
+    --storage {{ backup_storage_id }}
+    --vmid {{ backup_job_vmids }}
+    --prune-backups keep-last={{ backup_keep_last }}
+  when:
+    - backup_job_current != {}
+    - >-
+      backup_job_current.storage != backup_storage_id
+      or (backup_job_current.vmid | string) != backup_job_vmids
+      or backup_job_current.schedule != backup_job_schedule
+      or (backup_job_current['prune-backups']['keep-last'] | default('') | string) != (backup_keep_last | string)
