@@ -30,6 +30,9 @@
 - import_playbook: configure-portainer.yml
   tags: [configure, portainer]
 
+- import_playbook: configure-github-runner.yml
+  tags: [configure, github-runner]
+
 - import_playbook: configure-nextcloud.yml
   tags: [configure, nextcloud]
 

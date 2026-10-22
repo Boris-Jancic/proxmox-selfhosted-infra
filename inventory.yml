@@ -1,11 +1,22 @@
 all:
-  hosts:
-    pve:
-      # REPLACE with your Proxmox node IP/hostname
-      ansible_host: 192.168.88.10
-      ansible_user: root
-
   children:
+    # Cluster `skylab`. Every guest below carries `pve_node` (default:
+    # proxmox_node, i.e. pve-brain) naming the node it lives on; each node
+    # entry carries its own name so guests can be mapped to an SSH target.
+    proxmox_nodes:
+      vars:
+        ansible_user: root
+      hosts:
+        # Label kept as `pve` (referenced by homepage + older plays).
+        pve:
+          ansible_host: 192.168.88.10
+          pve_node: pve-brain
+          proxmox_domain: bong
+        pve-worker:
+          ansible_host: 192.168.88.20
+          pve_node: pve-worker
+          proxmox_domain: home.arpa
+
     virtual_machines:
       vars:
         ansible_user: root
@@ -30,9 +41,12 @@ all:
         ubuntu-vm2-cks-master:
           id: 120
           ansible_host: 192.168.88.120
-          memory: 2048
+          pve_node: pve-worker
+          vm_storage: local-lvm
+          memory: 2560
           disk: 50
-          cores: 1
+          # kubeadm preflight requires >= 2 CPUs.
+          cores: 2
           description: |
             # ubuntu-vm1
             Virtual machine that hosts following workloads:
@@ -42,9 +56,11 @@ all:
         ubuntu-vm3-cks-worker:
           id: 130
           ansible_host: 192.168.88.130
-          memory: 2048
+          pve_node: pve-worker
+          vm_storage: local-lvm
+          memory: 2560
           disk: 50
-          cores: 1
+          cores: 2
           description: |
             # ubuntu-vm1
             Virtual machine that hosts following workloads:
@@ -72,6 +88,7 @@ all:
         vaultwarden:
           ctid: 102
           ansible_host: 192.168.88.102
+          pve_node: pve-worker
           memory: 256
           disk: 4
           cores: 1
@@ -87,6 +104,7 @@ all:
         uptime-kuma:
           ctid: 103
           ansible_host: 192.168.88.103
+          pve_node: pve-worker
           memory: 256
           disk: 12
           cores: 1
@@ -97,6 +115,7 @@ all:
         homepage:
           ctid: 104
           ansible_host: 192.168.88.104
+          pve_node: pve-worker
           memory: 256
           disk: 4
           cores: 1

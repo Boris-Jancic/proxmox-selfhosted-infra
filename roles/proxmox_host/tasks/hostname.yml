@@ -2,18 +2,18 @@
 # Renaming a node (see docs/proxmox-host.md) is a manual procedure; this only
 # guards against drift and keeps name resolution intact. pmxcfs refuses to
 # start if the hostname does not resolve to a non-loopback IP.
-- name: Assert proxmox_node matches the real hostname
+- name: Assert pve_node matches the real hostname
   ansible.builtin.assert:
-    that: ansible_hostname == proxmox_node
+    that: ansible_hostname == pve_node
     fail_msg: >-
-      proxmox_node is '{{ proxmox_node }}' but the host is '{{ ansible_hostname }}'.
-      Fix group_vars/all/main.yml, or rename the node per docs/proxmox-host.md.
+      pve_node is '{{ pve_node }}' but the host is '{{ ansible_hostname }}'.
+      Fix the node entry in inventory.yml, or rename the node per docs/proxmox-host.md.
 
 - name: Ensure node FQDN and short name resolve to the host IP
   ansible.builtin.lineinfile:
     path: /etc/hosts
     regexp: '^{{ proxmox_host_ip | regex_escape }}\s'
-    line: "{{ proxmox_host_ip }} {{ proxmox_node }}.{{ proxmox_domain }} {{ proxmox_node }}"
+    line: "{{ proxmox_host_ip }} {{ pve_node }}.{{ proxmox_domain }} {{ pve_node }}"
 
 - name: Check for postfix config
   ansible.builtin.stat:
@@ -24,6 +24,6 @@
   ansible.builtin.lineinfile:
     path: /etc/postfix/main.cf
     regexp: '^myhostname='
-    line: "myhostname={{ proxmox_node }}.{{ proxmox_domain }}"
+    line: "myhostname={{ pve_node }}.{{ proxmox_domain }}"
   when: postfix_cf.stat.exists
   notify: Restart postfix

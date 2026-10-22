@@ -6,11 +6,18 @@ ubuntu_cloud_image_dest: "/var/lib/vz/template/iso/{{ ubuntu_cloud_image_name }}
 
 ubuntu_bridge: "vmbr0"
 
+# Must exist on pve_node: data-hdd is pve-brain only, pve-worker has local-lvm.
+vm_storage: "{{ proxmox_storage }}"
+
 # These map directly from inventory host vars.
 # When the play targets `virtual_machines`, these resolve automatically.
 vm_id: "{{ id }}"
 vm_name: "{{ inventory_hostname }}"
 vm_memory: "{{ memory }}"
 vm_cores: "{{ cores }}"
+# Proxmox default model; unset means kvm64 (x86-64-v1), which modern images
+# (UBI/RHEL9 glibc, e.g. pgsty/silo) refuse to run on. Both nodes support it.
+# Only applies at creation — change existing VMs with `qm set <id> --cpu`.
+vm_cpu: x86-64-v2-AES
 vm_disk: "{{ disk }}"
 vm_ip: "{{ ansible_host }}"

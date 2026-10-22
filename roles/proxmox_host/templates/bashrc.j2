@@ -1,0 +1,61 @@
+# {{ ansible_managed }}
+# ~/.bashrc for root on Proxmox nodes. Proxmox helpers live in ~/.bashrc.d/pve.bash.
+
+# Non-interactive shells (scp, ansible, cron) stop here.
+case $- in *i*) ;; *) return ;; esac
+
+# --- PATH ---
+{% for dir in shell_extra_path %}
+[ -d "{{ dir }}" ] && case ":$PATH:" in *":{{ dir }}:"*) ;; *) PATH="{{ dir }}:$PATH" ;; esac
+{% endfor %}
+export PATH
+
+# --- History ---
+HISTSIZE=50000
+HISTFILESIZE=100000
+HISTCONTROL=ignoreboth:erasedups
+HISTTIMEFORMAT='%F %T  '
+shopt -s histappend checkwinsize globstar autocd cdspell 2>/dev/null
+PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+
+# --- Completion ---
+if [ -f /usr/share/bash-completion/bash_completion ]; then
+  . /usr/share/bash-completion/bash_completion
+fi
+bind 'set completion-ignore-case on'
+bind 'set show-all-if-ambiguous on'
+bind 'set colored-stats on'
+bind 'set colored-completion-prefix on'
+bind 'set mark-symlinked-directories on'
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
+
+# fzf: Ctrl-R history, Ctrl-T files, Alt-C cd, `**<Tab>` fuzzy completion
+if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+  . /usr/share/doc/fzf/examples/key-bindings.bash
+  export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+fi
+
+# --- Colors ---
+EDITOR=$(command -v {{ shell_editor }} || command -v vim || echo vi); export EDITOR VISUAL=$EDITOR
+export LESS='-R -F -i'
+eval "$(dircolors -b)"
+alias ls='ls --color=auto --group-directories-first'
+alias ll='ls -lh'
+alias la='ls -lhA'
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip -color=auto'
+alias df='df -hT -x tmpfs -x devtmpfs -x overlay'
+alias free='free -h'
+# Colored man pages
+export LESS_TERMCAP_md=$'\e[1;36m' LESS_TERMCAP_me=$'\e[0m' \
+       LESS_TERMCAP_us=$'\e[4;32m' LESS_TERMCAP_ue=$'\e[0m' \
+       LESS_TERMCAP_so=$'\e[1;33;44m' LESS_TERMCAP_se=$'\e[0m'
+
+# --- Homelab repo ---
+HOMELAB_REPO="{{ homelab_repo_dir }}"
+
+# --- Extra snippets (pve.bash: prompt, banner, guest helpers) ---
+for f in ~/.bashrc.d/*.bash; do [ -r "$f" ] && . "$f"; done
+unset f

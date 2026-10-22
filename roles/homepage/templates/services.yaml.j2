@@ -13,20 +13,23 @@
 {% set _cf_tunnel = (cloudflare_tunnel_token ~ ('=' * _cf_pad)) | b64decode | from_json %}
 
 - Infrastructure:
-    - Proxmox:
+{# One card per cluster node; the cluster UI behind the href shows all of them. #}
+{% for n in groups['proxmox_nodes'] %}
+    - Proxmox {{ hostvars[n].pve_node }}:
         href: https://proxmox.{{ cloudflare_zone }}/
-        description: PVE node · {{ hostvars['pve'].ansible_host }}
+        description: PVE node · {{ hostvars[n].ansible_host }}
         icon: proxmox.png
-        siteMonitor: https://{{ hostvars['pve'].ansible_host }}:8006
+        siteMonitor: https://{{ hostvars[n].ansible_host }}:8006
         # Token needs PVEAuditor on / (propagate) or CPU/mem render as NaN:
         #   pveum acl modify / --tokens 'root@pam!homepage' --roles PVEAuditor
         widget:
           type: proxmox
-          url: https://{{ hostvars['pve'].ansible_host }}:8006
+          url: https://{{ hostvars[n].ansible_host }}:8006
           username: "{{ proxmox_api_user }}!{{ proxmox_homepage_token_id }}"
           password: '{% raw %}{{HOMEPAGE_VAR_PROXMOX_PASSWORD}}{% endraw %}'
-          node: "{{ proxmox_node }}"
+          node: "{{ hostvars[n].pve_node }}"
 
+{% endfor %}
     - Pi-hole:
         href: https://pihole.{{ cloudflare_zone }}/admin/
         description: DNS + ad-block · CT {{ hostvars['pi-hole'].ctid }}

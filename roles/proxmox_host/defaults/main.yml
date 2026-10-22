@@ -1,8 +1,13 @@
 ---
-# Node identity. `proxmox_node` (group_vars/all/main.yml) must equal the host's
-# real hostname — guest configs live under /etc/pve/nodes/<hostname>/.
+# Node identity. `pve_node` (set on each node entry in inventory.yml) must equal
+# the host's real hostname — guest configs live under /etc/pve/nodes/<hostname>/.
+# proxmox_domain is per node in inventory.yml; this is only the fallback.
 proxmox_domain: bong
 proxmox_host_ip: "{{ ansible_host }}"
+
+# The primary node (proxmox_node) owns the data-hdd backup storage, and runs
+# the cluster-wide tasks (backup job, metric servers) so they apply once.
+proxmox_host_primary: "{{ pve_node == proxmox_node }}"
 
 # --- Root volume housekeeping (the root LV is only ~40G) ---
 journald_max_use: 200M
@@ -38,3 +43,30 @@ backup_job_compress: zstd
 # pvestatd errors every cycle and every guest shows status "unknown".
 proxmox_disabled_metric_servers:
   - InfluxDB
+
+# --- APT repos ---
+# deb822 files under /etc/apt/sources.list.d/ to disable (no subscription).
+proxmox_enterprise_repo_files:
+  - pve-enterprise.sources
+
+# --- Root shell (bash completion, colors, Proxmox prompt + login banner) ---
+shell_packages:
+  - bash-completion
+  - fzf
+  - git
+  - python3-argcomplete
+shell_editor: nvim
+# Prepended to PATH when the directory exists.
+shell_extra_path:
+  - /root/.local/bin
+  - /opt/nvim-linux-x86_64/bin
+# Enables the `ap <playbook>` helper on nodes where the repo is checked out.
+homelab_repo_dir: /root/proxmox-homelab
+shell_ansible_completion_cmds:
+  - ansible
+  - ansible-playbook
+  - ansible-inventory
+  - ansible-doc
+  - ansible-galaxy
+  - ansible-vault
+  - ansible-config

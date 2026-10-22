@@ -1,18 +1,37 @@
 # Proxmox host
 
-Configuration of the PVE node itself (not a guest): node identity, root-volume housekeeping, backup storage + job, metric servers.
+Configuration of the PVE nodes themselves (not guests): node identity and root-volume housekeeping on every node; backup storage + job and metric servers on the primary node only.
 
-- **Node:** `pve-brain` (`proxmox_node`) | **IP:** 192.168.88.10 | **FQDN:** `pve-brain.bong`
-- **Inventory entry:** `pve` — only an Ansible label for 192.168.88.10; it is independent of the node name.
+Two-node cluster `skylab` (inventory group `proxmox_nodes`):
+
+| Inventory entry | Node (`pve_node`) | IP | FQDN | Role |
+|---|---|---|---|---|
+| `pve` | `pve-brain` (= `proxmox_node`, primary) | 192.168.88.10 | `pve-brain.bong` | Storage + edge: data-hdd, backups, Nextcloud VM, caddy, pi-hole |
+| `pve-worker` | `pve-worker` | 192.168.88.20 | `pve-worker.home.arpa` | Compute: k8s VMs, vaultwarden, uptime-kuma, homepage (NVMe `local-lvm` only) |
+
+The inventory entry name is only an Ansible label; `pve_node` is what must match the hostname.
+
+### Guest placement
+
+Every guest has `pve_node` (default `proxmox_node`, set in `group_vars/all/main.yml`). `pve_node_host` maps it back to the node's inventory entry, which provisioning uses to run `qm`/`pct`/`pveam` on the right node. VMs on `pve-worker` also need `vm_storage: local-lvm` — `data-hdd` exists only on pve-brain.
+
+Changing `pve_node` does **not** move a guest. Migrate it first, then update the inventory:
+
+```bash
+pct migrate <ctid> pve-worker --restart              # CT, ~seconds of downtime
+qm migrate <vmid> pve-worker --targetstorage local-lvm  # stopped VM, disk copied over 1GbE
+```
 
 ## Variables
 
-Defaults in `roles/proxmox_host/defaults/main.yml`. `proxmox_node` lives in `group_vars/all/main.yml`.
+Defaults in `roles/proxmox_host/defaults/main.yml`. `proxmox_node` lives in `group_vars/all/main.yml`; `pve_node` and `proxmox_domain` are set per node in `inventory.yml`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `proxmox_node` | `pve-brain` | Must equal the host's real hostname (asserted) |
-| `proxmox_domain` | `bong` | Domain for the FQDN in `/etc/hosts` and postfix |
+| `proxmox_node` | `pve-brain` | Primary node: API target, default `pve_node` for guests |
+| `pve_node` | per node | Must equal the node's real hostname (asserted) |
+| `proxmox_domain` | `bong` (fallback) | Domain for the FQDN in `/etc/hosts` and postfix; per node in inventory |
+| `proxmox_host_primary` | `pve_node == proxmox_node` | Runs backup storage/job + metric tasks |
 | `journald_max_use` | `200M` | `SystemMaxUse` for the persistent journal |
 | `proxmox_unused_isos` | `[]` | ISO filenames in `local:iso` to delete |
 | `backup_vg` / `backup_thinpool` | `data-hdd` / `data` | Thin pool the backup LV is carved from |
@@ -43,7 +62,7 @@ Idempotent: a re-run reports `changed=0`.
 
 ## Renaming the node (runbook)
 
-The node was renamed `pve` → `pve-brain`. Renaming is manual; Ansible only guards against drift (`proxmox_node` must equal the hostname). Per the [Proxmox wiki](https://pve.proxmox.com/wiki/Renaming_a_PVE_node), for a single-node setup:
+The node was renamed `pve` → `pve-brain`. Renaming is manual; Ansible only guards against drift (`pve_node` must equal the hostname). Per the [Proxmox wiki](https://pve.proxmox.com/wiki/Renaming_a_PVE_node), for a single-node setup:
 
 1. Before rebooting, make `/etc/hosts` resolve the **new** name to the node IP (`192.168.88.10 pve-brain.bong pve-brain`). Otherwise `pve-cluster` (pmxcfs) fails with `Unable to resolve node name ... to a non-loopback IP address` and every PVE service stays down.
 2. `hostnamectl set-hostname <new>` and reboot.
@@ -52,8 +71,9 @@ The node was renamed `pve` → `pve-brain`. Renaming is manual; Ansible only gua
 5. `pvecm updatecerts --force`, restart `pveproxy`/`pvedaemon`/`pvestatd`/`pve-firewall`/`pvescheduler`/`pve-ha-*`, then start guests: `pvesh create /nodes/<new>/startall`.
 6. Remove the old directory: `rm -r /etc/pve/nodes/<old>`.
 7. Replace the old name wherever it was referenced:
-   - `proxmox_node` in `group_vars/all/main.yml`
-   - the homepage Proxmox widget `node:` (rendered from `proxmox_node`)
+   - `pve_node` on the node entry in `inventory.yml` (and `proxmox_node` in `group_vars/all/main.yml` if it is the primary)
+   - `pve_node` on every guest living on it
+   - the homepage Proxmox widgets (rendered from each node's `pve_node`)
    - `/etc/pve/priv/known_hosts` (`pve` → `pve-brain`)
    - postfix `myhostname`
    - **metric servers in `/etc/pve/status.cfg` that name the host** (see below)
