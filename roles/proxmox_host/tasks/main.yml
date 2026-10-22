@@ -22,6 +22,11 @@
   when: proxmox_host_primary | bool
   tags: [metrics]
 
+- name: Read-only API tokens
+  include_tasks: api_tokens.yml
+  when: proxmox_host_primary | bool
+  tags: [tokens]
+
 - name: APT repositories (no-subscription)
   include_tasks:
     file: repos.yml

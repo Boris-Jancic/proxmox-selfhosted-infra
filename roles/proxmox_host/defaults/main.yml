@@ -44,6 +44,13 @@ backup_job_compress: zstd
 proxmox_disabled_metric_servers:
   - InfluxDB
 
+# --- Read-only API tokens ---
+# Existing tokens switched to privilege separation + a read-only ACL, so they
+# hold only `role` on `path` (default PVEAuditor on /), not their user's rights.
+proxmox_readonly_tokens:
+  - user: "{{ proxmox_api_user }}"
+    id: "{{ proxmox_homepage_token_id }}"
+
 # --- APT repos ---
 # deb822 files under /etc/apt/sources.list.d/ to disable (no subscription).
 proxmox_enterprise_repo_files:

@@ -1,0 +1,54 @@
+---
+# Read-only API tokens. Only existing tokens are touched: creating one would
+# mint a new secret that has to land in secrets.yml by hand.
+- name: Read read-only API tokens
+  ansible.builtin.command: >-
+    pvesh get /access/users/{{ item.user }}/token/{{ item.id }} --output-format json
+  loop: "{{ proxmox_readonly_tokens }}"
+  loop_control:
+    label: "{{ item.user }}!{{ item.id }}"
+  register: readonly_tokens_raw
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Fail on a missing read-only token
+  ansible.builtin.fail:
+    msg: >-
+      Token {{ item.item.user }}!{{ item.item.id }} does not exist. Create it in
+      Datacenter → Permissions → API Tokens (privilege separation on) and put
+      the secret in secrets.yml.
+  loop: "{{ readonly_tokens_raw.results }}"
+  loop_control:
+    label: "{{ item.item.user }}!{{ item.item.id }}"
+  when: item.rc != 0
+
+- name: Read ACLs
+  ansible.builtin.command: pvesh get /access/acl --output-format json
+  register: acl_raw
+  changed_when: false
+  check_mode: false
+
+# ACL before privsep: the token is never left with no permissions.
+- name: Grant read-only role to tokens
+  ansible.builtin.command: >-
+    pveum acl modify {{ item.path | default('/') }}
+    --tokens '{{ item.user }}!{{ item.id }}' --roles {{ item.role | default('PVEAuditor') }} --propagate 1
+  loop: "{{ proxmox_readonly_tokens }}"
+  loop_control:
+    label: "{{ item.user }}!{{ item.id }}"
+  when: >-
+    acl_raw.stdout | from_json
+    | selectattr('type', 'equalto', 'token')
+    | selectattr('ugid', 'equalto', item.user ~ '!' ~ item.id)
+    | selectattr('path', 'equalto', item.path | default('/'))
+    | selectattr('roleid', 'equalto', item.role | default('PVEAuditor'))
+    | list | length == 0
+
+- name: Enable privilege separation on tokens
+  ansible.builtin.command: >-
+    pveum user token modify {{ item.item.user }} {{ item.item.id }} --privsep 1
+  loop: "{{ readonly_tokens_raw.results }}"
+  loop_control:
+    label: "{{ item.item.user }}!{{ item.item.id }}"
+  when: (item.stdout | from_json).privsep | int != 1
