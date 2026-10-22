@@ -1,0 +1,9 @@
+# Managed by Ansible (roles/homepage/templates/proxmox.yaml.j2).
+# Per-node API creds for the CPU/RAM badges on guest cards (proxmoxNode /
+# proxmoxVMID in services.yaml). Keys must equal the real node names.
+{% for n in groups['proxmox_nodes'] %}
+{{ hostvars[n].pve_node }}:
+  url: https://{{ hostvars[n].ansible_host }}:8006
+  token: "{{ proxmox_api_user }}!{{ proxmox_homepage_token_id }}"
+  secret: '{% raw %}{{HOMEPAGE_VAR_PROXMOX_PASSWORD}}{% endraw %}'
+{% endfor %}

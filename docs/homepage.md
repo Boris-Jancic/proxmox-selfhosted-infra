@@ -14,12 +14,27 @@ Defaults in `roles/homepage/defaults/main.yml`.
 | `homepage_image` | `ghcr.io/gethomepage/homepage:v1.12.3` | Docker image tag |
 | `homepage_host_port` | `3000` | Host port |
 | `homepage_allowed_hosts` | `<ansible_host>:3000` | Allowed `Host` headers (v0.10+ requirement) |
+| `portainer_env_id` | `2` | Portainer environment ID for the widget |
+| `homepage_runner_repo` | `Boris-Jancic/nextjs-blog` | Repo whose runners page the GitHub runner card links to |
 
 `homepage_allowed_hosts` is set per-host in `inventory.yml`. Include every name the browser may send:
 
 ```yaml
 homepage_allowed_hosts: "homepage.yourdomain.com,192.168.88.104:3000"
 ```
+
+## Layout
+
+| Group | Cards |
+|---|---|
+| Infrastructure | one Proxmox widget per `proxmox_nodes` host, Pi-hole, Caddy (+ cloudflared) |
+| Compute | Portainer (ubuntu-vm1), GitHub runner, every other VM in `virtual_machines` (k8s nodes) |
+| Apps | Blog, Vaultwarden, Uptime Kuma, Nextcloud |
+| Admin / Social | bookmarks; Admin links each node's PVE UI |
+
+Guest cards carry `proxmoxNode`/`proxmoxVMID` from inventory, so they show the guest's CPU/RAM and follow `pve_node` after a migration. Credentials for that live in the rendered `proxmox.yaml` (one entry per node, secret via `HOMEPAGE_VAR_PROXMOX_PASSWORD`).
+
+The `root@pam!homepage` token needs `PVEAuditor` on `/` (propagated), or node stats render as NaN and guest badges stay empty. With privilege separation off it currently inherits full root rights; a read-only token with privilege separation on is the safer setup.
 
 ## Deploy
 
