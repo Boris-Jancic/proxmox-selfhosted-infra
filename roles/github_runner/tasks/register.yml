@@ -1,12 +1,12 @@
 ---
 # `.runner` is written by config.sh on successful registration.
 - name: Check runner registration
-  stat:
+  ansible.builtin.stat:
     path: "{{ github_runner_dir }}/.runner"
   register: runner_cfg
 
 - name: Fetch registration token
-  uri:
+  ansible.builtin.uri:
     url: "https://api.github.com/repos/{{ github_runner_repo }}/actions/runners/registration-token"
     method: POST
     headers:
@@ -18,7 +18,7 @@
   when: not runner_cfg.stat.exists
 
 - name: Register runner
-  command: >
+  ansible.builtin.command: >
     ./config.sh --unattended --replace
     --url https://github.com/{{ github_runner_repo }}
     --token {{ runner_token.json.token }}
@@ -33,13 +33,13 @@
   when: not runner_cfg.stat.exists
 
 - name: Install runner service
-  command: ./svc.sh install {{ github_runner_user }}
+  ansible.builtin.command: ./svc.sh install {{ github_runner_user }}
   args:
     chdir: "{{ github_runner_dir }}"
     creates: "{{ github_runner_dir }}/.service"
 
 - name: Start runner service
-  command: ./svc.sh start
+  ansible.builtin.command: ./svc.sh start
   args:
     chdir: "{{ github_runner_dir }}"
   # systemctl start is a no-op when already running.

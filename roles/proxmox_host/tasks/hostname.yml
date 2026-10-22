@@ -12,7 +12,7 @@
 - name: Ensure node FQDN and short name resolve to the host IP
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    regexp: '^{{ proxmox_host_ip | regex_escape }}\s'
+    regexp: "^{{ proxmox_host_ip | regex_escape }}\\s"
     line: "{{ proxmox_host_ip }} {{ pve_node }}.{{ proxmox_domain }} {{ pve_node }}"
 
 - name: Check for postfix config
@@ -23,7 +23,7 @@
 - name: Keep postfix myhostname in sync with the FQDN
   ansible.builtin.lineinfile:
     path: /etc/postfix/main.cf
-    regexp: '^myhostname='
+    regexp: "^myhostname="
     line: "myhostname={{ pve_node }}.{{ proxmox_domain }}"
   when: postfix_cf.stat.exists
   notify: Restart postfix

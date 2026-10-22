@@ -35,4 +35,5 @@
     --content backup
     --is_mountpoint yes
     --prune-backups keep-last={{ backup_keep_last }}
+  changed_when: true
   when: backup_storage_status.rc != 0

@@ -1,0 +1,47 @@
+---
+name: ansible-lint
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install tools
+        run: pip install -r requirements-ci.txt
+
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: yamllint
+        run: yamllint --strict --format github .
+
+      - name: ansible-lint
+        run: ansible-lint
+
+      - name: Syntax check
+        run: |
+          rc=0
+          for pb in playbooks/*.yml; do
+            echo "::group::$pb"
+            ansible-playbook --syntax-check "$pb" </dev/null || rc=1
+            echo "::endgroup::"
+          done
+          exit $rc

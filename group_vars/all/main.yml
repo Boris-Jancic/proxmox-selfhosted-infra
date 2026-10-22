@@ -1,3 +1,4 @@
+---
 # Non-secret defaults shared across plays.
 # Companion file: group_vars/all/secrets.yml (gitignored, vaulted in prod).
 # An example with the same variable names lives at secrets.yml.example.

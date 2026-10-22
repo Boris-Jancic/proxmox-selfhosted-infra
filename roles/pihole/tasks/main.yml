@@ -1,22 +1,22 @@
 ---
 - name: Detect pi-hole binary
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/pihole
   register: pihole_bin
 
 - name: Install pi-hole if missing
-  include_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   when: not pihole_bin.stat.exists
 
 - name: Verify pihole.toml is present (v6+)
-  stat:
+  ansible.builtin.stat:
     path: /etc/pihole/pihole.toml
   register: pihole_toml
 
 - name: Fail if pihole.toml absent
-  fail:
+  ansible.builtin.fail:
     msg: "pihole.toml not found — install may have failed, or this is a pre-v6 install."
   when: not pihole_toml.stat.exists
 
 - name: Manage web admin password
-  include_tasks: password.yml
+  ansible.builtin.include_tasks: password.yml

@@ -21,6 +21,7 @@
     --prune-backups keep-last={{ backup_keep_last }}
     --notes-template '{{ '{{guestname}}' }}'
     --enabled 1
+  changed_when: true
   when: backup_job_current == {}
 
 # Repoints an existing job (e.g. one still writing to `local`) at the backup storage.
@@ -31,6 +32,7 @@
     --storage {{ backup_storage_id }}
     --vmid {{ backup_job_vmids }}
     --prune-backups keep-last={{ backup_keep_last }}
+  changed_when: true
   when:
     - backup_job_current != {}
     - >-

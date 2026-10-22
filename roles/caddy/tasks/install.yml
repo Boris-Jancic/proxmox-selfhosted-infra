@@ -1,6 +1,6 @@
 ---
 - name: Check caddy binary
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/caddy
   register: caddy_bin
 
@@ -15,16 +15,16 @@
   when: not caddy_bin.stat.exists
 
 - name: Deploy caddy systemd unit
-  template:
+  ansible.builtin.template:
     src: caddy.service.j2
     dest: /etc/systemd/system/caddy.service
     owner: root
     group: root
     mode: "0644"
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Enable and start caddy
-  systemd:
+  ansible.builtin.systemd:
     name: caddy
     enabled: true
     state: started

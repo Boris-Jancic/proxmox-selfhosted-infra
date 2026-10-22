@@ -1,0 +1,17 @@
+---
+profile: production
+
+exclude_paths:
+  - .github/
+  - .ansible/
+
+# Collections are installed from requirements.yml before linting.
+offline: true
+
+skip_list:
+  # Role vars (vm_*, backup_*, shell_*, ...) are the interface set from
+  # inventory.yml and group_vars; prefixing them would rename every override.
+  - var-naming[no-role-prefix]
+  # nextcloud-aio / uptime-kuma are local roles, never published to Galaxy;
+  # renaming the directories only churns playbooks and docs.
+  - role-name
