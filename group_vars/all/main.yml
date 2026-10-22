@@ -26,10 +26,10 @@ proxmox_api_user: "root@pam"
 proxmox_api_token_id: "ansible"
 
 # Separate token used only by the homepage widget, so the widget never holds the
-# Ansible provisioning token above. With privilege separation off it has root's
-# permissions, not read-only ones.
+# Ansible provisioning token above. Read-only: roles/proxmox_host turns on
+# privilege separation and grants PVEAuditor on / (tag `tokens`).
 # Create in Proxmox GUI: Datacenter → API Tokens → Add, user root@pam,
-# token ID "homepage", privilege separation off.
+# token ID "homepage", privilege separation on.
 proxmox_homepage_token_id: "homepage"
 
 # LXC defaults

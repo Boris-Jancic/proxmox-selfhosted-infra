@@ -11,6 +11,13 @@
    decode it so the cloudflared widget needs no extra inventory vars. #}
 {% set _cf_pad = (4 - (cloudflare_tunnel_token | length) % 4) % 4 %}
 {% set _cf_tunnel = (cloudflare_tunnel_token ~ ('=' * _cf_pad)) | b64decode | from_json %}
+{# CPU/RAM badge for a guest card, via proxmox.yaml. Node + id come from
+   inventory, so a migrated guest follows its pve_node automatically. #}
+{% macro pve_stats(h) -%}
+proxmoxNode: {{ hostvars[h].pve_node }}
+        proxmoxVMID: {{ hostvars[h].ctid if hostvars[h].ctid is defined else hostvars[h].id }}
+        proxmoxType: {{ 'lxc' if hostvars[h].ctid is defined else 'qemu' }}
+{%- endmacro %}
 
 - Infrastructure:
 {# One card per cluster node; the cluster UI behind the href shows all of them. #}
@@ -20,8 +27,8 @@
         description: PVE node · {{ hostvars[n].ansible_host }}
         icon: proxmox.png
         siteMonitor: https://{{ hostvars[n].ansible_host }}:8006
-        # Token needs PVEAuditor on / (propagate) or CPU/mem render as NaN:
-        #   pveum acl modify / --tokens 'root@pam!homepage' --roles PVEAuditor
+        # Token is read-only (PVEAuditor on /), set by roles/proxmox_host
+        # (`--tags tokens`). Without that ACL CPU/mem render as NaN.
         widget:
           type: proxmox
           url: https://{{ hostvars[n].ansible_host }}:8006
@@ -38,6 +45,7 @@
         # proxy on any path ("Parse Error: Data after Connection: close"),
         # so probe reachability with ICMP instead of HTTP.
         ping: {{ hostvars['pi-hole'].ansible_host }}
+        {{ pve_stats('pi-hole') }}
         widget:
           type: pihole
           url: http://{{ hostvars['pi-hole'].ansible_host }}
@@ -54,6 +62,7 @@
         description: Reverse proxy + CF tunnel · CT {{ hostvars['caddy'].ctid }}
         icon: caddy.png
         siteMonitor: http://{{ hostvars['caddy'].ansible_host }}/
+        {{ pve_stats('caddy') }}
 {% if cloudflare_api_token is defined %}
         # Tunnel health straight from the Cloudflare API; account/tunnel ids
         # are decoded from cloudflare_tunnel_token above.
@@ -69,9 +78,13 @@
         # `cloudflare_api_token`, then re-run configure-homepage.yml.
 {% endif %}
 
+- Compute:
     - Portainer:
         href: https://portainer.{{ cloudflare_zone }}/
+        # Docker host card for ubuntu-vm1: the CPU/RAM badge covers everything on
+        # the VM (Portainer, Nextcloud AIO, blog stack, GitHub runner).
         description: Docker manager · VM {{ hostvars['ubuntu-vm1'].id }}
+        {{ pve_stats('ubuntu-vm1') }}
         icon: portainer.png
         # env ID: Portainer → Environments → URL shows /#!/endpoints/<id>.
         # Set `portainer_env_id` in homepage defaults or inventory to match.
@@ -83,10 +96,27 @@
           env: {{ portainer_env_id }}
           key: '{% raw %}{{HOMEPAGE_VAR_PORTAINER_KEY}}{% endraw %}'
 
+    - GitHub runner:
+        # systemd service, no HTTP endpoint: ping only shows the VM is up.
+        # Runner online/offline state lives on the repo's runners page.
+        href: https://github.com/{{ homepage_runner_repo }}/settings/actions/runners
+        description: Actions runner · VM {{ hostvars['ubuntu-vm1'].id }}
+        icon: github.png
+        ping: {{ hostvars['ubuntu-vm1'].ansible_host }}
+
+{# Every other VM is a provisioned-only k8s node (no configure role, no UI). #}
+{% for h in groups['virtual_machines'] | reject('equalto', 'ubuntu-vm1') %}
+    - {{ h }}:
+        description: k8s node · VM {{ hostvars[h].id }} · {{ hostvars[h].pve_node }}
+        icon: kubernetes.png
+        ping: {{ hostvars[h].ansible_host }}
+        {{ pve_stats(h) }}
+
+{% endfor %}
 - Apps:
     - Blog:
         href: https://blog.{{ cloudflare_zone }}/
-        description: Personal website
+        description: Personal website · Portainer stack on VM {{ hostvars['ubuntu-vm1'].id }}
         icon: mdi-post-outline
         siteMonitor: https://blog.{{ cloudflare_zone }}/
 
@@ -96,12 +126,14 @@
         description: Password manager · CT {{ hostvars['vaultwarden'].ctid }}
         icon: vaultwarden.png
         siteMonitor: http://{{ hostvars['vaultwarden'].ansible_host }}:8080/
+        {{ pve_stats('vaultwarden') }}
 
     - Uptime Kuma:
         href: https://kuma.{{ cloudflare_zone }}/
         description: Uptime monitor · CT {{ hostvars['uptime-kuma'].ctid }}
         icon: uptime-kuma.png
         siteMonitor: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001/
+        {{ pve_stats('uptime-kuma') }}
         # Widget reads the "pve" status page (kuma.<zone>/status/pve) over LAN.
         widget:
           type: uptimekuma

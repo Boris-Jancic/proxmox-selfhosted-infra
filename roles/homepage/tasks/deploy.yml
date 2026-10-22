@@ -41,6 +41,7 @@
     - services.yaml
     - bookmarks.yaml
     - widgets.yaml
+    - proxmox.yaml
 
 # `docker compose up -d` is itself idempotent — if nothing changed the
 # container is left alone. We surface ansible-changed only when compose
