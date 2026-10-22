@@ -18,6 +18,14 @@
   ansible.builtin.import_playbook: configure-proxmox-host.yml
   tags: [configure, proxmox-host]
 
+- name: Configure Proxmox firewall
+  ansible.builtin.import_playbook: configure-firewall.yml
+  tags: [configure, firewall]
+
+- name: Configure corosync QDevice
+  ansible.builtin.import_playbook: configure-qdevice.yml
+  tags: [configure, qdevice]
+
 - name: Configure Pi-hole
   ansible.builtin.import_playbook: configure-pihole.yml
   tags: [configure, pihole]

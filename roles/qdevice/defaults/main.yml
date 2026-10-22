@@ -1,0 +1,10 @@
+---
+# corosync-qnetd host: an always-on Debian/Ubuntu box that is NOT a guest of
+# this cluster (Pi, NAS, spare mini PC). Set it as the only host of the
+# `qdevice` group in inventory.yml; the role skips while the group is empty.
+qdevice_host: "{{ groups['qdevice'] | default([]) | first | default('') }}"
+qdevice_ip: "{{ hostvars[qdevice_host].ansible_host if qdevice_host else '' }}"
+
+# `pvecm qdevice setup` pushes certs from the primary node over SSH with the
+# cluster key, so that key must be authorized for root on the qnetd host.
+qdevice_cluster_pubkey_path: /root/.ssh/id_rsa.pub
