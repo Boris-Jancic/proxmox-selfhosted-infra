@@ -2,7 +2,7 @@
 - name: Clean apt package cache
   ansible.builtin.apt:
     clean: true
-  changed_when: false  # apt clean always reports changed
+  changed_when: false # apt clean always reports changed
 
 - name: Ensure journald drop-in directory exists
   ansible.builtin.file:

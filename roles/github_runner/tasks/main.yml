@@ -1,6 +1,6 @@
 ---
 - name: Install runner
-  include_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
 
 - name: Register runner + install service
-  include_tasks: register.yml
+  ansible.builtin.include_tasks: register.yml

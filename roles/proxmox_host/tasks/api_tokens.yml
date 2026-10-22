@@ -37,6 +37,7 @@
   loop: "{{ proxmox_readonly_tokens }}"
   loop_control:
     label: "{{ item.user }}!{{ item.id }}"
+  changed_when: true
   when: >-
     acl_raw.stdout | from_json
     | selectattr('type', 'equalto', 'token')
@@ -51,4 +52,5 @@
   loop: "{{ readonly_tokens_raw.results }}"
   loop_control:
     label: "{{ item.item.user }}!{{ item.item.id }}"
+  changed_when: true
   when: (item.stdout | from_json).privsep | int != 1

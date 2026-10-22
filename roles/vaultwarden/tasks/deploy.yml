@@ -1,6 +1,6 @@
 ---
 - name: Ensure vaultwarden install directory
-  file:
+  ansible.builtin.file:
     path: "{{ vaultwarden_install_dir }}"
     state: directory
     owner: root
@@ -8,7 +8,7 @@
     mode: "0700"
 
 - name: Ensure vaultwarden data directory
-  file:
+  ansible.builtin.file:
     path: "{{ vaultwarden_data_dir }}"
     state: directory
     owner: root
@@ -18,7 +18,7 @@
 # `no_log` hides the rendered ADMIN_TOKEN from ansible output. The file on
 # disk is mode 0600 so only root on the LXC can read it.
 - name: Render docker-compose.yml
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ vaultwarden_install_dir }}/docker-compose.yml"
     owner: root
@@ -30,7 +30,7 @@
 # container is left alone. We surface ansible-changed only when compose
 # actually started or recreated something.
 - name: Bring vaultwarden stack up
-  command: docker compose up -d
+  ansible.builtin.command: docker compose up -d
   args:
     chdir: "{{ vaultwarden_install_dir }}"
   register: compose_up

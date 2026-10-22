@@ -1,17 +1,18 @@
 ---
 - name: Check if cloudflared installed
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/cloudflared
   register: cloudflared_bin
 
 - name: Download cloudflared deb
-  get_url:
+  ansible.builtin.get_url:
     url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
     dest: /tmp/cloudflared.deb
+    mode: "0644"
   when: not cloudflared_bin.stat.exists
 
 - name: Install cloudflared
-  apt:
+  ansible.builtin.apt:
     deb: /tmp/cloudflared.deb
   when: not cloudflared_bin.stat.exists
 
@@ -20,34 +21,37 @@
 # the token currently in secrets.yml — without this, a rotated token never gets
 # re-applied (the old gate only checked the unit file existed).
 - name: Check if tunnel service installed
-  stat:
+  ansible.builtin.stat:
     path: /etc/systemd/system/cloudflared.service
   register: cloudflared_svc
 
 - name: Read installed tunnel unit
-  slurp:
+  ansible.builtin.slurp:
     src: /etc/systemd/system/cloudflared.service
   register: cloudflared_unit
   when: cloudflared_svc.stat.exists
 
 - name: Determine whether the installed token matches secrets.yml
-  set_fact:
+  ansible.builtin.set_fact:
     cloudflared_token_matches: >-
       {{ cloudflared_svc.stat.exists
          and cloudflare_tunnel_token in (cloudflared_unit.content | b64decode) }}
 
 # Tear down a stale install so the reinstall below registers the new token.
 - name: Uninstall stale tunnel service (token changed)
-  command: cloudflared service uninstall
+  ansible.builtin.command: cloudflared service uninstall
+  changed_when: true
   when: cloudflared_svc.stat.exists and not cloudflared_token_matches
 
 - name: Install tunnel as systemd service
-  command: "cloudflared service install {{ cloudflare_tunnel_token }}"
+  ansible.builtin.command: "cloudflared service install {{ cloudflare_tunnel_token }}"
+  no_log: true
+  changed_when: true
   when: not cloudflared_token_matches
-  notify: restart cloudflared
+  notify: Restart cloudflared
 
 - name: Ensure cloudflared started
-  systemd:
+  ansible.builtin.systemd:
     name: cloudflared
     state: started
     enabled: true

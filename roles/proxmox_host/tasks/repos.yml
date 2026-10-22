@@ -11,7 +11,7 @@
 - name: Disable enterprise repos
   ansible.builtin.lineinfile:
     path: "{{ item.stat.path }}"
-    regexp: '^Enabled:'
+    regexp: "^Enabled:"
     line: "Enabled: false"
     insertbefore: BOF
   loop: "{{ enterprise_repos.results | selectattr('stat.exists') | list }}"
