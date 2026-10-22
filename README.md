@@ -8,7 +8,6 @@
 > Image is AI generated
 
 Two-node Proxmox VE cluster (`skylab`), fully managed as IaC with Ansible.
-Replaces an earlier `init-all.sh` that grew unmanageable as services accumulated.
 
 ## Cluster
 
