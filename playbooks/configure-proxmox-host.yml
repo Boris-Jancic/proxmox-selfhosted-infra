@@ -1,0 +1,10 @@
+---
+# Host-level config for the Proxmox nodes themselves: node identity and
+# root-volume housekeeping on every node; backup storage + job and metric
+# servers on the primary node (proxmox_node) only. Targets `proxmox_nodes`,
+# not guests. Limit to one node with `--limit pve-worker`.
+- name: Configure Proxmox host
+  hosts: proxmox_nodes
+  gather_facts: true
+  roles:
+    - proxmox_host

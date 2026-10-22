@@ -1,0 +1,46 @@
+---
+# `.runner` is written by config.sh on successful registration.
+- name: Check runner registration
+  stat:
+    path: "{{ github_runner_dir }}/.runner"
+  register: runner_cfg
+
+- name: Fetch registration token
+  uri:
+    url: "https://api.github.com/repos/{{ github_runner_repo }}/actions/runners/registration-token"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ github_pat }}"
+      Accept: application/vnd.github+json
+    status_code: 201
+  register: runner_token
+  no_log: true
+  when: not runner_cfg.stat.exists
+
+- name: Register runner
+  command: >
+    ./config.sh --unattended --replace
+    --url https://github.com/{{ github_runner_repo }}
+    --token {{ runner_token.json.token }}
+    --name {{ github_runner_name }}
+    --labels {{ github_runner_labels }}
+  args:
+    chdir: "{{ github_runner_dir }}"
+    creates: "{{ github_runner_dir }}/.runner"
+  become: true
+  become_user: "{{ github_runner_user }}"
+  no_log: true
+  when: not runner_cfg.stat.exists
+
+- name: Install runner service
+  command: ./svc.sh install {{ github_runner_user }}
+  args:
+    chdir: "{{ github_runner_dir }}"
+    creates: "{{ github_runner_dir }}/.service"
+
+- name: Start runner service
+  command: ./svc.sh start
+  args:
+    chdir: "{{ github_runner_dir }}"
+  # systemctl start is a no-op when already running.
+  changed_when: false

@@ -1,4 +1,22 @@
 ---
+# Each CT is created on its inventory `pve_node` (default: proxmox_node). The
+# Debian template lives on node-local `local` storage, so make sure every node
+# that hosts a CT has it before the API is asked to create one there.
+- name: Ensure LXC template on every node hosting CTs
+  hosts: proxmox_nodes
+  gather_facts: false
+
+  tasks:
+    # Fresh nodes have no appliance index yet; `pveam update` fetches it.
+    - name: Download LXC template
+      ansible.builtin.shell: >-
+        pveam update && pveam download local {{ lxc_template | basename }}
+      args:
+        creates: "/var/lib/vz/template/cache/{{ lxc_template | basename }}"
+      when: >-
+        groups['lxc_containers'] | map('extract', hostvars, 'pve_node')
+        | select('equalto', pve_node) | list | length > 0
+
 - name: Provision Proxmox LXC containers
   hosts: localhost
   connection: local
@@ -13,7 +31,7 @@
         api_token_secret: "{{ proxmox_api_token_secret }}"
 
         validate_certs: false
-        node: "{{ proxmox_node }}"
+        node: "{{ hostvars[item].pve_node }}"
         vmid: "{{ hostvars[item].ctid }}"
         hostname: "{{ item }}"
         ostemplate: "{{ lxc_template }}"
@@ -48,7 +66,7 @@
         api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
         validate_certs: false
-        node: "{{ proxmox_node }}"
+        node: "{{ hostvars[item].pve_node }}"
         vmid: "{{ hostvars[item].ctid }}"
         state: started
       loop: "{{ groups['lxc_containers'] }}"
@@ -60,8 +78,11 @@
 # (and various other syscalls). Tagging a host with `lxc_docker_host: true` in
 # the inventory opts it into this override. Reduces LXC isolation — fine for a
 # homelab, not appropriate for multi-tenant.
+#
+# /etc/pve/lxc is a symlink to the local node's directory and `pct` only acts
+# on local CTs, so each node handles the CTs that live on it.
 - name: Apply docker-host LXC overrides
-  hosts: pve
+  hosts: proxmox_nodes
   gather_facts: false
 
   tasks:
@@ -71,7 +92,9 @@
         line: "lxc.apparmor.profile: unconfined"
         state: present
       loop: "{{ groups['lxc_containers'] }}"
-      when: hostvars[item].lxc_docker_host | default(false) | bool
+      when:
+        - hostvars[item].pve_node == pve_node
+        - hostvars[item].lxc_docker_host | default(false) | bool
       register: docker_host_overrides
       loop_control:
         label: "{{ hostvars[item].ctid }} {{ item }}"

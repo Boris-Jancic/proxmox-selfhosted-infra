@@ -1,0 +1,39 @@
+# Managed by Ansible (roles/caddy/templates/Caddyfile.j2).
+# Edits here are overwritten on next playbook run.
+{
+	admin off
+	auto_https off
+	log {
+		level {{ caddy_log_level }}
+	}
+}
+
+{% for route in caddy_routes %}
+{% if route.destination is defined %}
+{% set is_https_backend = route.destination.startswith('https://') or route.backend_ssl | default(false) %}
+http://{{ route.domain }} {
+{% if caddy_security_headers_enabled %}
+	header {
+		Strict-Transport-Security "max-age={{ caddy_sts_seconds }}; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+{% endif %}
+{% if route.redirect_root_to is defined %}
+	redir / {{ route.redirect_root_to }} 301
+{% endif %}
+	reverse_proxy {{ route.destination }} {
+{% if is_https_backend %}
+		transport http {
+			tls_insecure_skip_verify
+		}
+{% endif %}
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+{% endif %}
+{% endfor %}
