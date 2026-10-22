@@ -34,7 +34,8 @@ all:
             Virtual machine that hosts following workloads:
               - portainer
               - nextcloudAIO
-              - minio
+              - nextjs-blog (Portainer stack, silo object storage)
+              - GitHub Actions runner
 
             Do not edit manually.
 
@@ -48,7 +49,7 @@ all:
           # kubeadm preflight requires >= 2 CPUs.
           cores: 2
           description: |
-            # ubuntu-vm1
+            # ubuntu-vm2-cks-master
             Virtual machine that hosts following workloads:
               - k8s master node
 
@@ -62,9 +63,9 @@ all:
           disk: 50
           cores: 2
           description: |
-            # ubuntu-vm1
+            # ubuntu-vm3-cks-worker
             Virtual machine that hosts following workloads:
-              - k8s master node
+              - k8s worker node
 
             Do not edit manually.
         
