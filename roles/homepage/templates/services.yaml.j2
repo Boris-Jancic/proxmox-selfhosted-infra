@@ -27,8 +27,8 @@ proxmoxNode: {{ hostvars[h].pve_node }}
         description: PVE node · {{ hostvars[n].ansible_host }}
         icon: proxmox.png
         siteMonitor: https://{{ hostvars[n].ansible_host }}:8006
-        # Token needs PVEAuditor on / (propagate) or CPU/mem render as NaN:
-        #   pveum acl modify / --tokens 'root@pam!homepage' --roles PVEAuditor
+        # Token is read-only (PVEAuditor on /), set by roles/proxmox_host
+        # (`--tags tokens`). Without that ACL CPU/mem render as NaN.
         widget:
           type: proxmox
           url: https://{{ hostvars[n].ansible_host }}:8006

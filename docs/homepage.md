@@ -34,7 +34,7 @@ homepage_allowed_hosts: "homepage.yourdomain.com,192.168.88.104:3000"
 
 Guest cards carry `proxmoxNode`/`proxmoxVMID` from inventory, so they show the guest's CPU/RAM and follow `pve_node` after a migration. Credentials for that live in the rendered `proxmox.yaml` (one entry per node, secret via `HOMEPAGE_VAR_PROXMOX_PASSWORD`).
 
-The `root@pam!homepage` token needs `PVEAuditor` on `/` (propagated), or node stats render as NaN and guest badges stay empty. With privilege separation off it currently inherits full root rights; a read-only token with privilege separation on is the safer setup.
+The `root@pam!homepage` token is read-only: privilege separation on, `PVEAuditor` on `/` (propagated). `roles/proxmox_host` enforces both (`ansible-playbook playbooks/configure-proxmox-host.yml --limit pve --tags tokens`); the secret is unchanged. Without the ACL node stats render as NaN and guest badges stay empty.
 
 ## Deploy
 
