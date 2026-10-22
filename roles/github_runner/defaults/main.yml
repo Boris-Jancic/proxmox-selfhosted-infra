@@ -1,0 +1,15 @@
+---
+# Repo-scoped self-hosted runner. Only runs deploy jobs that need LAN access
+# (e.g. Portainer webhooks) — Cloudflare Bot Fight Mode challenges GitHub's
+# hosted runners, so they can't reach portainer.<zone>.
+github_runner_repo: Boris-Jancic/nextjs-blog
+github_runner_name: "{{ inventory_hostname }}"
+github_runner_labels: homelab
+
+# Pin + checksum; bump from https://github.com/actions/runner/releases.
+github_runner_version: "2.338.0"
+github_runner_sha256: af4b794c1bc41d73d40535e3fe092a39f9679cd8d965954c2aca25a05ca41d32
+
+# Unprivileged, no docker group: deploy jobs only need curl.
+github_runner_user: gha
+github_runner_dir: /opt/actions-runner

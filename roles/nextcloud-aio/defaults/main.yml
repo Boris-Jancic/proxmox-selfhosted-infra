@@ -8,15 +8,15 @@ nextcloud_aio_install_dir: /opt/nextcloud-aio
 nextcloud_aio_data_dir: /mnt/nextcloud-data
 
 # Port on which the AIO mastercontainer admin UI is reachable.
-# nginx-proxy fronts this at nextcloud.{{ cloudflare_zone }} → https://192.168.88.110:8080.
+# Caddy fronts this at nextcloud.{{ cloudflare_zone }} → https://192.168.88.110:8080.
 nextcloud_aio_admin_port: 8080
 
 # Port AIO will bind the Apache/Nextcloud instance to.
-# nginx-proxy fronts this at cloud.{{ cloudflare_zone }} → http://192.168.88.110:11000.
+# Caddy fronts this at cloud.{{ cloudflare_zone }} → http://192.168.88.110:11000.
 nextcloud_aio_apache_port: 11000
 
 # Public domain Nextcloud answers to (browser-facing, no https://).
-# Must match the domain configured in nginx-proxy for port 11000.
+# Must match the domain configured in Caddy for port 11000.
 nextcloud_aio_domain: "cloud.{{ cloudflare_zone }}"
 
 # Set true when AIO cannot reach the domain itself (reverse-proxy setup).

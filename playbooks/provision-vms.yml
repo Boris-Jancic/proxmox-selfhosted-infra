@@ -1,10 +1,11 @@
 ---
-# All Proxmox API calls and qm commands run on the PVE host itself.
-# `connection: local` keeps execution local while iterating over VM inventory entries.
+# Iterates over VM inventory entries without connecting to them (they may not
+# exist yet): the ubuntu role delegates API calls to localhost and qm commands
+# to the VM's node. No play-level `connection: local` — it would also apply to
+# the delegated tasks and run them on the controller instead of the node.
 - name: Provision Ubuntu VMs via Proxmox API
   hosts: virtual_machines
   gather_facts: false
-  connection: local
   roles:
     - ubuntu
 
