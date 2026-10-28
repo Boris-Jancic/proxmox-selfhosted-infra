@@ -57,11 +57,13 @@ No `--check` in CI: hosted runners can't reach 192.168.88.x, and the only self-h
 
 ## Architecture
 
-Two distinct play types — never mix them:
+Two distinct play types — never mix them (plus read-only tooling):
 
 1. **Provision** (`provision-lxc.yml`, `provision-vms.yml`) — talks to the Proxmox API via `community.proxmox` (localhost connection), creating each guest on its `pve_node`. Node-local steps (template download, `qm` cloud-init, `lxc.apparmor.profile: unconfined` for `lxc_docker_host: true` CTs) run on the owning node via `pve_node_host`.
 
 2. **Configure** (`configure-*.yml`) — SSHes into the target guest or the `proxmox_nodes`, runs a single named role.
+
+3. **Read-only tooling** (`tools/cluster-mcp/`) — Python MCP server for agents; PVEAuditor token `root@pam!mcp`, GET-only client, no write tools. Tests: `cd tools/cluster-mcp && pytest -q` (CI: `.github/workflows/cluster-mcp.yml`). Never add a write tool; see `docs/cluster-mcp.md`.
 
 ### Role shape
 
