@@ -119,6 +119,10 @@ ansible-playbook playbooks/site.yml --tags caddy
 - `pre-commit install` enables [gitleaks](https://github.com/gitleaks/gitleaks) (custom rules in `.gitleaks.toml`) and a hook that rejects any non-vaulted `secrets.yml` / `vault.yml`.
 - `.github/workflows/secret-scan.yml` runs gitleaks on every push and PR.
 
+## AI: read-only cluster MCP server
+
+`tools/cluster-mcp/` is an [MCP](https://modelcontextprotocol.io) server that lets Claude (or any MCP client) query the cluster live: Proxmox API, Ansible inventory/facts and, optionally, Prometheus. It is read-only by construction: a `PVEAuditor` token with privilege separation, a GET-only client, no write tools, secrets from env only, every call audit-logged. See [docs/cluster-mcp.md](docs/cluster-mcp.md).
+
 ## Layout
 
 ```
@@ -128,6 +132,7 @@ group_vars/all/      main.yml (defaults), secrets.yml (gitignored), secrets.yml.
 playbooks/           site, provision-lxc, provision-vms, configure-<service>, configure-proxmox-host
 roles/<service>/     defaults, tasks, templates, handlers, meta (docker dependency)
 docs/                Per-service setup guides
+tools/cluster-mcp/   Read-only MCP server for the cluster (Python, pytest)
 .gitleaks.toml       Secret-scan rules (pre-commit + CI)
 ```
 
