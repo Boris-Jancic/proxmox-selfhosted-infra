@@ -24,7 +24,7 @@
     cores: "{{ vm_cores }}"
     cpu: "{{ vm_cpu }}"
     net:
-      net0: "virtio,bridge={{ ubuntu_bridge }}"
+      net0: "virtio,bridge={{ ubuntu_bridge }},firewall=1"
     onboot: true
     state: present
   delegate_to: localhost

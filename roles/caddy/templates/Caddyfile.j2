@@ -6,6 +6,13 @@
 	log {
 		level {{ caddy_log_level }}
 	}
+	# cloudflared on this CT is the only client. Trusting it keeps its
+	# X-Forwarded-Proto (https) and X-Forwarded-For instead of overwriting them
+	# with loopback/http, and makes {client_ip} the real visitor.
+	servers {
+		trusted_proxies static {{ caddy_trusted_proxies | join(' ') }}
+		client_ip_headers CF-Connecting-IP X-Forwarded-For
+	}
 }
 
 {% for route in caddy_routes %}
@@ -28,10 +35,7 @@ http://{{ route.domain }} {
 			tls_insecure_skip_verify
 		}
 {% endif %}
-		header_up Host {host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {client_ip}
 	}
 }
 
