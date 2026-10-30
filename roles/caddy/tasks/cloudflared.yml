@@ -1,20 +1,32 @@
 ---
-- name: Check if cloudflared installed
-  ansible.builtin.stat:
-    path: /usr/bin/cloudflared
-  register: cloudflared_bin
+# Cloudflare's apt repo + state: latest, so every run upgrades cloudflared
+# (old releases get deprecated and stop connecting). Replaces the earlier
+# one-off GitHub .deb install; apt upgrades that package in place.
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
 
-- name: Download cloudflared deb
+- name: Fetch Cloudflare apt GPG key
   ansible.builtin.get_url:
-    url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-    dest: /tmp/cloudflared.deb
+    url: https://pkg.cloudflare.com/cloudflare-main.gpg
+    dest: /etc/apt/keyrings/cloudflare-main.gpg
     mode: "0644"
-  when: not cloudflared_bin.stat.exists
+    force: false
 
-- name: Install cloudflared
+- name: Add cloudflared apt repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main
+    state: present
+    filename: cloudflared
+
+- name: Install latest cloudflared
   ansible.builtin.apt:
-    deb: /tmp/cloudflared.deb
-  when: not cloudflared_bin.stat.exists
+    name: cloudflared
+    state: latest # noqa: package-latest
+    update_cache: true
+  notify: Restart cloudflared
 
 # `cloudflared service install <token>` bakes the token into the ExecStart line
 # of the unit. Read it back so we can tell whether the running service matches

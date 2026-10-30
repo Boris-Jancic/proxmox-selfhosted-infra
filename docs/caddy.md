@@ -9,7 +9,7 @@ Single static `caddy` binary acting as the reverse proxy for every service, with
 ## How it works
 
 - Caddy serves **plain HTTP on `:80`** — site addresses are rendered as `http://<domain>` and `auto_https off` is set, because Cloudflare terminates TLS at the tunnel edge. No local certs.
-- `cloudflared` is installed from the `.deb` and registered as a systemd service with `cloudflared service install <token>`. Public hostnames / ingress are managed in the **Cloudflare Zero Trust dashboard**, pointing the tunnel at `http://localhost:80`.
+- `cloudflared` is installed from Cloudflare's apt repo (`pkg.cloudflare.com`) with `state: latest`, so every play run upgrades it and restarts the service when the version changes. It is registered as a systemd service with `cloudflared service install <token>`. Public hostnames / ingress are managed in the **Cloudflare Zero Trust dashboard**, pointing the tunnel at `http://localhost:80`.
 - Caddy trusts cloudflared (`trusted_proxies`), so upstreams get the visitor's IP in `X-Forwarded-For` / `X-Real-IP` and `X-Forwarded-Proto: https`. Direct LAN hits on `:80` are untrusted and get `http` + the LAN IP.
 - The whole `Caddyfile` is rendered from the `caddy_routes` list on the `caddy` host in `inventory.yml`.
 
