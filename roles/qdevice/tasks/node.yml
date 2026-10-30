@@ -1,0 +1,29 @@
+---
+- name: Install corosync-qdevice
+  ansible.builtin.apt:
+    name: corosync-qdevice
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Read cluster quorum state
+  ansible.builtin.command: pvecm status
+  register: qdevice_pvecm
+  changed_when: false
+  check_mode: false
+  when: pve_node == proxmox_node
+
+# `ssh-copy-id` inside `pvecm qdevice setup` prompts on an unknown host key.
+- name: Trust the qnetd host key
+  ansible.builtin.known_hosts:
+    name: "{{ qdevice_ip }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 ' ~ qdevice_ip) }}"
+  when: pve_node == proxmox_node
+
+# Needs every node online. Runs once; re-runs see the Qdevice in pvecm status.
+- name: Add the QDevice to the cluster
+  ansible.builtin.command: pvecm qdevice setup {{ qdevice_ip }}
+  changed_when: true
+  when:
+    - pve_node == proxmox_node
+    - "'Qdevice' not in qdevice_pvecm.stdout"

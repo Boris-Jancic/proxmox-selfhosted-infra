@@ -14,6 +14,12 @@ caddy_log_level: INFO
 #                               when destination starts with https://
 caddy_routes: []
 
+# Proxies whose X-Forwarded-* / CF-Connecting-IP headers Caddy trusts.
+# cloudflared runs on the same CT and dials localhost:80.
+caddy_trusted_proxies:
+  - 127.0.0.1/32
+  - ::1/128
+
 caddy_security_headers_enabled: true
 caddy_sts_seconds: 31536000
 

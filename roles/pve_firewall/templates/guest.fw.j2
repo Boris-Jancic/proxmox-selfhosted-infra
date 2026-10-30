@@ -1,0 +1,17 @@
+# Managed by Ansible (roles/pve_firewall) from `firewall_in` / `firewall_out`
+# on {{ guest }} in inventory.yml. Edits here are overwritten.
+[OPTIONS]
+enable: 1
+policy_in: {{ pve_fw_policy_in }}
+policy_out: ACCEPT
+
+[RULES]
+{% for r in hostvars[guest].firewall_out | default([]) %}
+OUT {{ r.get('action', 'DROP') }}{{ ' -dest ' ~ r.dest if r.dest is defined else '' }}{{ ' -p ' ~ r.get('proto', 'tcp') ~ ' -dport ' ~ r.dport if r.dport is defined else '' }} -log nolog{{ ' # ' ~ r.comment if r.comment is defined else '' }}
+{% endfor %}
+{% for r in pve_fw_guest_common_in + hostvars[guest].firewall_in %}
+{% set srcs = r.get('source') %}
+{% for src in ([srcs] if srcs is string else srcs or [None]) %}
+IN {{ r.macro ~ '(ACCEPT)' if r.macro is defined else 'ACCEPT' }}{{ ' -source ' ~ src if src else '' }}{{ ' -p ' ~ r.get('proto', 'tcp') ~ ' -dport ' ~ r.dport if r.dport is defined else '' }} -log nolog{{ ' # ' ~ r.comment if r.comment is defined else '' }}
+{% endfor %}
+{% endfor %}

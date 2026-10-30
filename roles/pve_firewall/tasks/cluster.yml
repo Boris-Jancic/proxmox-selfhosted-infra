@@ -1,0 +1,16 @@
+---
+# /etc/pve is pmxcfs: cluster-wide, so these are written once from the primary.
+- name: Render datacenter firewall
+  ansible.builtin.include_tasks: pve_file.yml
+  vars:
+    pve_fw_file_src: cluster.fw.j2
+    pve_fw_file_dest: /etc/pve/firewall/cluster.fw
+
+- name: Render guest firewalls
+  ansible.builtin.include_tasks: pve_file.yml
+  vars:
+    pve_fw_file_src: guest.fw.j2
+    pve_fw_file_dest: "/etc/pve/firewall/{{ hostvars[guest].ctid | default(hostvars[guest].id) }}.fw"
+  loop: "{{ pve_fw_guests }}"
+  loop_control:
+    loop_var: guest

@@ -1,0 +1,48 @@
+---
+# Datacenter firewall switch. Guests only get filtered when this is on, their
+# .fw file has `enable: 1` and their NIC has `firewall=1`.
+pve_fw_enabled: true
+
+# Default inbound policy for nodes and firewalled guests. ACCEPT = dry run
+# (rules loaded, nothing dropped); then back to DROP.
+pve_fw_policy_in: DROP
+
+# Extra client IPs/CIDRs for direct access. Together with both nodes they form
+# the `management` IPSet, the only sources allowed to SSH/GUI (22, 8006,
+# 3128, 5900-5999) on the nodes and to reach admin UIs on guests directly.
+# Empty = tunnel-only: the GUI (incl. web shell) is reached only through
+# proxmox.<zone> (Caddy is in api_clients). Recovery is the node console.
+pve_fw_admin_cidrs: []
+
+# Local render dir; files are copied into /etc/pve only when they differ.
+pve_fw_stage_dir: /root/.cache/pve_firewall
+
+pve_fw_lan_cidr: "192.168.88.0/24"
+
+# Guests that may reach node APIs on 8006 (Caddy route, Homepage widgets,
+# Uptime Kuma checks).
+pve_fw_api_clients:
+  - caddy
+  - homepage
+  - uptime-kuma
+
+# Guests that poll other guests' app ports (dashboards, monitors).
+pve_fw_monitors:
+  - homepage
+  - uptime-kuma
+
+# Applied to every firewalled guest on top of its own `firewall_in`.
+pve_fw_guest_common_in:
+  - { macro: SSH, source: +management, comment: ansible + admin }
+  - { macro: Ping, source: lan }
+
+# Guests with a `firewall_in` list in inventory.yml get a .fw file and
+# firewall=1 on net0. Guests without one (k8s VMs) stay unfiltered.
+pve_fw_guests: >-
+  {{ (groups['lxc_containers'] + groups['virtual_machines'])
+     | map('extract', hostvars) | selectattr('firewall_in', 'defined')
+     | map(attribute='inventory_hostname') | list }}
+pve_fw_local_guests: >-
+  {{ (groups['lxc_containers'] + groups['virtual_machines'])
+     | map('extract', hostvars) | selectattr('pve_node', 'equalto', pve_node)
+     | map(attribute='inventory_hostname') | list }}
