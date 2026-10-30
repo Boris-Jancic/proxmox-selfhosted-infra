@@ -2,7 +2,7 @@
 # on {{ guest }} in inventory.yml. Edits here are overwritten.
 [OPTIONS]
 enable: 1
-policy_in: DROP
+policy_in: {{ pve_fw_policy_in }}
 policy_out: ACCEPT
 
 [RULES]

@@ -3,8 +3,8 @@
 # .fw file has `enable: 1` and their NIC has `firewall=1`.
 pve_fw_enabled: true
 
-# Default for node traffic. Set ACCEPT for a dry run (rules + logs, no drops),
-# then back to DROP.
+# Default inbound policy for nodes and firewalled guests. ACCEPT = dry run
+# (rules loaded, nothing dropped); then back to DROP.
 pve_fw_policy_in: DROP
 
 # Extra client IPs/CIDRs for direct access. Together with both nodes they form
