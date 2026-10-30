@@ -14,6 +14,9 @@ pve_fw_policy_in: DROP
 # proxmox.<zone> (Caddy is in api_clients). Recovery is the node console.
 pve_fw_admin_cidrs: []
 
+# Local render dir; files are copied into /etc/pve only when they differ.
+pve_fw_stage_dir: /root/.cache/pve_firewall
+
 pve_fw_lan_cidr: "192.168.88.0/24"
 
 # Guests that may reach node APIs on 8006 (Caddy route, Homepage widgets,

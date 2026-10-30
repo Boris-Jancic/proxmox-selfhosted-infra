@@ -1,9 +1,9 @@
 ---
 - name: Render node firewall
-  ansible.builtin.template:
-    src: host.fw.j2
-    dest: "/etc/pve/nodes/{{ pve_node }}/host.fw"
-    mode: "0640"
+  ansible.builtin.include_tasks: pve_file.yml
+  vars:
+    pve_fw_file_src: host.fw.j2
+    pve_fw_file_dest: "/etc/pve/nodes/{{ pve_node }}/host.fw"
 
 # Rules only apply to a NIC with firewall=1. pct/qm only act on local guests.
 - name: Read config of local firewalled guests
