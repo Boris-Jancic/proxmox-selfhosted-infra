@@ -50,6 +50,8 @@ Each guest's node is set by `pve_node` in `inventory.yml`. See [docs/proxmox-hos
 
 External access via Cloudflare Zero Trust tunnel — no open ports on the router required.
 
+Inside the LAN, the Proxmox firewall drops everything by default: apps only accept traffic from Caddy, the monitors and the nodes, and the Proxmox GUI is reached only through the tunnel. Diagram and rules: [docs/firewall.md](docs/firewall.md). Quorum notes: [docs/qdevice.md](docs/qdevice.md).
+
 ## Services
 
 <img width="1887" height="738" alt="image" src="https://github.com/user-attachments/assets/0c4a1f30-c3fc-429d-9383-dc7500d79f81" />

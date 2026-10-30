@@ -10,6 +10,52 @@
 
 The role also sets `firewall=1` on `net0` of every firewalled guest (rules are ignored without it). New guests get the flag at provision time.
 
+## Diagram
+
+Solid arrows are allowed inbound flows (port in the label). Everything else into a node or firewalled guest is dropped. Return traffic for established connections is always allowed.
+
+```mermaid
+flowchart LR
+    internet(["Internet"]) -->|HTTPS| cf["Cloudflare edge<br/>TLS + tunnel"]
+    cf -.->|"outbound tunnel"| caddy["CT 100 Caddy + cloudflared"]
+
+    lanc(["LAN clients<br/>192.168.88.0/24"])
+    mon["Monitors<br/>CT 104 Homepage<br/>CT 103 Uptime Kuma"]
+    mgmt["management IPSet<br/>pve-brain .10, pve-worker .20<br/>+ pve_fw_admin_cidrs (empty)"]
+    runner["VM 110<br/>GitHub Actions runner"]
+
+    subgraph apps["Firewalled guests: inbound DROP by default"]
+        direction TB
+        web["Behind Caddy<br/>Vaultwarden :8080 · Kuma :3001<br/>Homepage :3000 · Pi-hole admin :80<br/>Nextcloud :11000 · blog :3000"]
+        lanonly["LAN-only<br/>Pi-hole DNS :53<br/>Portainer :9000/:9443<br/>Caddy :80"]
+        adminonly["Nodes-only<br/>SSH :22 on every guest<br/>Nextcloud AIO admin :8080/:8443"]
+    end
+
+    subgraph nodes["Proxmox nodes: inbound DROP by default"]
+        gui["PVE GUI + web shell :8006"]
+        coro["corosync, SSH, migration"]
+    end
+
+    caddy -->|"app ports"| web
+    caddy -->|"8006"| gui
+    mon -->|"app ports"| web
+    mon -->|"8006"| gui
+    lanc -->|"53 · 80 · 9000/9443"| lanonly
+    mgmt -->|"all ports"| web & lanonly & adminonly
+    mgmt -->|"node to node"| coro
+    runner --x|"OUT DROP"| nodes
+```
+
+| From | To | Ports | Rule source |
+|---|---|---|---|
+| Cloudflare tunnel → Caddy | each app | its app port, 8006 on pve-brain | `caddy` alias, `api_clients` IPSet |
+| Homepage, Uptime Kuma | apps, both nodes | app ports, 8006 | `monitors`, `api_clients` IPSets |
+| Any LAN client | Pi-hole / Caddy / Portainer | 53 / 80 / 9000, 9443 | `lan` alias (DNS: any source) |
+| Nodes (+ `pve_fw_admin_cidrs`) | nodes, every firewalled guest | 22, 8006, console, all app ports | `management` IPSet |
+| Node ↔ node | corosync | UDP 5405-5412 | built in |
+| VM 110 | either node | anything (new connections) | `OUT DROP -dest +pve_nodes` |
+| Anyone else | node GUI/SSH, Nextcloud AIO admin | — | dropped: admin is tunnel-only via `proxmox.<zone>` |
+
 ## Policy
 
 - **Nodes:** default DROP. GUI/SSH/console (22, 8006, 3128, 5900-5999) only from `+management` (both nodes + `pve_fw_admin_cidrs`), built in by PVE. Corosync between nodes is built in. `api_clients` (Caddy, Homepage, Uptime Kuma) may reach 8006.
