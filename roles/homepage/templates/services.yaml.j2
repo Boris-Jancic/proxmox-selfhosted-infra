@@ -80,7 +80,7 @@ proxmoxNode: {{ hostvars[h].pve_node }}
 
 - Compute:
     - Portainer:
-        href: https://portainer.{{ cloudflare_zone }}/
+        href: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:9000/
         # Docker host card for ubuntu-vm1: the CPU/RAM badge covers everything on
         # the VM (Portainer, Nextcloud AIO, blog stack, GitHub runner).
         description: Docker manager · VM {{ hostvars['ubuntu-vm1'].id }}

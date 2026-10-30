@@ -52,8 +52,8 @@ all:
           firewall_out:
             - { dest: +pve_nodes, comment: runner must not reach the nodes }
           firewall_in:
-            - { dport: 9000, source: [caddy, +monitors, +management], comment: portainer }
-            - { dport: 9443, source: +management, comment: portainer https }
+            # Portainer is LAN-only: no Caddy route, no tunnel hostname.
+            - { dport: "9000,9443", source: lan, comment: portainer }
             - { dport: 11000, source: [caddy, +monitors, +management], comment: nextcloud }
             - { dport: 3000, source: [caddy, +management], comment: blog }
             - { dport: "8080,8443", source: +management, comment: nextcloud aio admin }
@@ -180,10 +180,6 @@ all:
             - name: kuma
               domain: "kuma.{{ cloudflare_zone }}"
               destination: http://192.168.88.103:3001
-
-            - name: portainer
-              domain: "portainer.{{ cloudflare_zone }}"
-              destination: http://192.168.88.110:9000
 
             - name: cloud
               domain: "cloud.{{ cloudflare_zone }}"

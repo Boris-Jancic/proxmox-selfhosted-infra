@@ -41,7 +41,7 @@ firewall_out:
 
 ## Deploy
 
-With `pve_fw_admin_cidrs` empty (the default), the node GUI and its web shell are reachable only through `proxmox.<zone>` (Cloudflare → Caddy → 8006), and direct-only admin UIs (Nextcloud AIO 8080/8443, Portainer 9443) only from the nodes. Add a `/32` temporarily when you need one of those. Safest rollout:
+With `pve_fw_admin_cidrs` empty (the default), the node GUI and its web shell are reachable only through `proxmox.<zone>` (Cloudflare → Caddy → 8006), and Nextcloud AIO admin (8080/8443) only from the nodes. Portainer (9000/9443) is LAN-only. Add a `/32` temporarily when you need one of those. Safest rollout:
 
 ```bash
 ansible-playbook playbooks/configure-firewall.yml -e pve_fw_policy_in=ACCEPT

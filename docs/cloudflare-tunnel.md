@@ -41,7 +41,6 @@ Still in the tunnel config → **Public Hostnames → Add a public hostname**. E
 | `nextcloud` | `nextcloud.<zone>` | `http://localhost:80` |
 | `homepage` | `homepage.<zone>` | `http://localhost:80` |
 | `kuma` | `kuma.<zone>` | `http://localhost:80` |
-| `portainer` | `portainer.<zone>` | `http://localhost:80` |
 | `vaultwarden` | `vaultwarden.<zone>` | `http://localhost:80` |
 
 Cloudflare auto-creates the matching DNS `CNAME` for each hostname. The hostnames must match the `domain` values in the `caddy` host's `caddy_routes` (in `inventory.yml`) exactly.

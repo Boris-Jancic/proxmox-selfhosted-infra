@@ -39,10 +39,11 @@ Each guest's node is set by `pve_node` in `inventory.yml`. See [docs/proxmox-hos
          ├──▶  vaultwarden    .102   self-hosted password manager
          ├──▶  uptime-kuma    .103   service uptime monitoring
          ├──▶  homepage       .104   unified service dashboard
-         ├──▶  portainer      .110   container management UI (Ubuntu VM)
          ├──▶  blog           .110   Next.js blog, Portainer-managed stack
          ├──▶  nextcloud-aio  .110   file sync + office (Ubuntu VM)
          └──▶  proxmox UI     .10    cluster web UI
+
+  LAN only (192.168.88.0/24): portainer .110:9000/9443
 
   [pve-brain]  —  runs Ansible; CT/VM lifecycle via local API (127.0.0.1:8006)
 ```
