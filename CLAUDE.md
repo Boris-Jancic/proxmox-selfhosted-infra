@@ -123,7 +123,7 @@ Two-node cluster `skylab` (group `proxmox_nodes`): `pve-brain` (192.168.88.10, i
 - **VM CPU type must be ≥ x86-64-v2** — without `cpu:` Proxmox uses `kvm64` (v1), and modern images (UBI/RHEL9 glibc, e.g. `pgsty/silo`) die with `Fatal glibc error: CPU does not support x86-64-v2`. `roles/ubuntu` sets `vm_cpu: x86-64-v2-AES` at creation only; existing VMs need `qm set <id> --cpu x86-64-v2-AES` + a full stop/start. VM 110 is done; 120/130 still run `kvm64`.
 - **Run `ansible-playbook` with stdin redirected in non-TTY shells** (`</dev/null | cat`) — otherwise it aborts with "Non-blocking file handles detected".
 
-- **PVE firewall is on, default DROP** (`roles/pve_firewall`, `docs/firewall.md`). A guest only accepts what its `firewall_in` in `inventory.yml` lists (plus SSH from `+management`, ping from LAN); a new port or a new client of an existing port needs a rule there and a re-run of `configure-firewall.yml`. Node GUI/SSH only from the `management` IPSet (nodes + `pve_fw_admin_cidrs`).
+- **PVE firewall is on, default DROP** (`roles/pve_firewall`, `docs/firewall.md`). A guest only accepts what its `firewall_in` in `inventory.yml` lists (plus SSH from `+management`, ping from LAN); a new port or a new client of an existing port needs a rule there and a re-run of `configure-firewall.yml`. Node GUI/SSH only from the `management` IPSet (nodes + `pve_fw_admin_cidrs`, empty by default) and 8006 from Caddy, so admin access is tunnel-only via `proxmox.<zone>`; lockout recovery is `pve-firewall stop` from the node console.
 - **Two-node quorum needs the QDevice** (`roles/qdevice`, `docs/qdevice.md`). Without it, one node down makes `/etc/pve` read-only on the other.
 
 ## Adding a new service

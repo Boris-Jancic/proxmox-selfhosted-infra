@@ -7,12 +7,12 @@ pve_fw_enabled: true
 # then back to DROP.
 pve_fw_policy_in: DROP
 
-# Your client IPs/CIDRs (laptop, phone, VPN pool). Together with both nodes they
-# form the `management` IPSet, the only sources allowed to SSH/GUI (22, 8006,
+# Extra client IPs/CIDRs for direct access. Together with both nodes they form
+# the `management` IPSet, the only sources allowed to SSH/GUI (22, 8006,
 # 3128, 5900-5999) on the nodes and to reach admin UIs on guests directly.
-# Required while pve_fw_enabled, so the first run can't lock you out.
+# Empty = tunnel-only: the GUI (incl. web shell) is reached only through
+# proxmox.<zone> (Caddy is in api_clients). Recovery is the node console.
 pve_fw_admin_cidrs: []
-
 
 pve_fw_lan_cidr: "192.168.88.0/24"
 

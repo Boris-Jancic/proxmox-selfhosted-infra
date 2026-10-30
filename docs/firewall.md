@@ -23,7 +23,7 @@ The role also sets `firewall=1` on `net0` of every firewalled guest (rules are i
 |---|---|---|
 | `pve_fw_enabled` | `true` | Datacenter `enable` |
 | `pve_fw_policy_in` | `DROP` | Node default policy; `ACCEPT` for a dry run |
-| `pve_fw_admin_cidrs` | `[]` | **Required.** Your client IPs; added to `management` |
+| `pve_fw_admin_cidrs` | `[]` | Extra client IPs for direct access; added to `management`. Empty = tunnel-only |
 | `pve_fw_lan_cidr` | `192.168.88.0/24` | `lan` alias |
 | `pve_fw_api_clients` | caddy, homepage, uptime-kuma | Guests allowed to 8006 on the nodes |
 | `pve_fw_monitors` | homepage, uptime-kuma | Guests allowed to poll app ports |
@@ -41,11 +41,11 @@ firewall_out:
 
 ## Deploy
 
-Set `pve_fw_admin_cidrs` first (the play refuses to run without it). Safest rollout:
+With `pve_fw_admin_cidrs` empty (the default), the node GUI and its web shell are reachable only through `proxmox.<zone>` (Cloudflare → Caddy → 8006), and direct-only admin UIs (Nextcloud AIO 8080/8443, Portainer 9443) only from the nodes. Add a `/32` temporarily when you need one of those. Safest rollout:
 
 ```bash
 ansible-playbook playbooks/configure-firewall.yml -e pve_fw_policy_in=ACCEPT
-# from an admin IP, confirm SSH + GUI still work, then:
+# confirm proxmox.<zone> + its web shell still work, then:
 ansible-playbook playbooks/configure-firewall.yml
 pve-firewall status
 ```
