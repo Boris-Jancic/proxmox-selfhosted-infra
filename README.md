@@ -59,8 +59,7 @@ The Proxmox firewall drops all inbound traffic by default:
 For the diagram and the rules, refer to [docs/firewall.md](docs/firewall.md). For quorum, refer to [docs/qdevice.md](docs/qdevice.md).
 
 ## Services
-
-<img width="1887" height="738" alt="image" src="https://github.com/user-attachments/assets/0c4a1f30-c3fc-429d-9383-dc7500d79f81" />
+<img width="1432" height="819" alt="Screenshot 2026-10-26 at 16 09 56" src="https://github.com/user-attachments/assets/d582bd40-bad2-4952-87b1-1b8b20fcc26d" />
 
 > Homepage dashboard
 
