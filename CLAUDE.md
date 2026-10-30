@@ -124,6 +124,7 @@ Two-node cluster `skylab` (group `proxmox_nodes`): `pve-brain` (192.168.88.10, i
 - **Run `ansible-playbook` with stdin redirected in non-TTY shells** (`</dev/null | cat`) — otherwise it aborts with "Non-blocking file handles detected".
 
 - **PVE firewall is on, default DROP** (`roles/pve_firewall`, `docs/firewall.md`). A guest only accepts what its `firewall_in` in `inventory.yml` lists (plus SSH from `+management`, ping from LAN); a new port or a new client of an existing port needs a rule there and a re-run of `configure-firewall.yml`. Node GUI/SSH only from the `management` IPSet (nodes + `pve_fw_admin_cidrs`, empty by default) and 8006 from Caddy, so admin access is tunnel-only via `proxmox.<zone>`; lockout recovery is `pve-firewall stop` from the node console.
+- **`template`/`copy`/`lineinfile` can't create or replace files in `/etc/pve`** — pmxcfs rejects Ansible's atomic temp-file write (`Operation not permitted`). Render to a local staging file and `cp` it in (see `roles/pve_firewall/tasks/pve_file.yml`).
 - **Two-node quorum needs the QDevice** (`roles/qdevice`, `docs/qdevice.md`). Without it, one node down makes `/etc/pve` read-only on the other.
 
 ## Adding a new service
