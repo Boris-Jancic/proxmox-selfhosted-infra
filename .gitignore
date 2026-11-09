@@ -11,3 +11,6 @@ __pycache__/
 id_*
 !id_*.pub
 .sops.age
+.pytest_cache/
+.ruff_cache/
+*.egg-info/

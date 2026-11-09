@@ -33,6 +33,13 @@ proxmox_api_token_id: "ansible"
 # token ID "homepage", privilege separation on.
 proxmox_homepage_token_id: "homepage"
 
+# Token for the read-only cluster MCP server (tools/cluster-mcp). Same model as
+# the homepage token: privilege separation on, PVEAuditor on / (tag `tokens`).
+# Create in Proxmox GUI: Datacenter → API Tokens → Add, user root@pam,
+# token ID "mcp", privilege separation on. The secret is never stored in this
+# repo: export it as PVE_TOKEN_SECRET where the server runs.
+proxmox_mcp_token_id: "mcp"
+
 # LXC defaults
 proxmox_template_vmid: 799
 proxmox_storage: "data-hdd"
