@@ -1,0 +1,39 @@
+# Managed by Ansible (roles/pve_firewall). Edits here are overwritten.
+[OPTIONS]
+enable: {{ pve_fw_enabled | bool | ternary(1, 0) }}
+policy_in: {{ pve_fw_policy_in }}
+policy_out: ACCEPT
+
+[ALIASES]
+lan {{ pve_fw_lan_cidr }}
+{% for h in groups['lxc_containers'] + groups['virtual_machines'] %}
+{{ h }} {{ hostvars[h].ansible_host }}
+{% endfor %}
+
+[IPSET management]
+{% for n in groups['proxmox_nodes'] %}
+{{ hostvars[n].ansible_host }} # {{ hostvars[n].pve_node }}
+{% endfor %}
+{% for c in pve_fw_admin_cidrs %}
+{{ c }}
+{% endfor %}
+
+[IPSET pve_nodes]
+{% for n in groups['proxmox_nodes'] %}
+{{ hostvars[n].ansible_host }} # {{ hostvars[n].pve_node }}
+{% endfor %}
+
+[IPSET monitors]
+{% for h in pve_fw_monitors %}
+{{ hostvars[h].ansible_host }} # {{ h }}
+{% endfor %}
+
+[IPSET api_clients]
+{% for h in pve_fw_api_clients %}
+{{ hostvars[h].ansible_host }} # {{ h }}
+{% endfor %}
+
+# Node rules. SSH/GUI from +management and corosync between nodes are built in.
+[RULES]
+IN ACCEPT -source +api_clients -p tcp -dport 8006 -log nolog # caddy route, homepage + kuma checks
+IN Ping(ACCEPT) -source lan -log nolog

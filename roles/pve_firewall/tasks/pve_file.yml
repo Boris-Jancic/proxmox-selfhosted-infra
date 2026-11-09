@@ -1,0 +1,15 @@
+---
+# pmxcfs (/etc/pve) rejects Ansible's atomic write (temp file + rename), so
+# render to a local staging copy and cp it in only when it differs.
+- name: Stage firewall file {{ pve_fw_file_dest }}
+  ansible.builtin.template:
+    src: "{{ pve_fw_file_src }}"
+    dest: "{{ pve_fw_stage_dir }}/{{ pve_fw_file_dest | basename }}"
+    mode: "0640"
+
+- name: Install firewall file {{ pve_fw_file_dest }}
+  ansible.builtin.shell: >-
+    cmp -s {{ pve_fw_stage_dir }}/{{ pve_fw_file_dest | basename }} {{ pve_fw_file_dest }}
+    || { cp {{ pve_fw_stage_dir }}/{{ pve_fw_file_dest | basename }} {{ pve_fw_file_dest }} && echo installed; }
+  register: pve_fw_file_install
+  changed_when: "'installed' in pve_fw_file_install.stdout"

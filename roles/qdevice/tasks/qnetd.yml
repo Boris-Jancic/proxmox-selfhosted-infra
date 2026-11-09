@@ -1,0 +1,27 @@
+---
+- name: Install corosync-qnetd
+  ansible.builtin.apt:
+    name: corosync-qnetd
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Read the cluster SSH key from the primary node
+  ansible.builtin.slurp:
+    src: "{{ qdevice_cluster_pubkey_path }}"
+  delegate_to: >-
+    {{ groups['proxmox_nodes'] | map('extract', hostvars)
+       | selectattr('pve_node', 'equalto', proxmox_node)
+       | map(attribute='inventory_hostname') | first }}
+  register: qdevice_cluster_pubkey
+
+- name: Authorize the cluster key for root
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ qdevice_cluster_pubkey.content | b64decode }}"
+
+- name: Ensure corosync-qnetd is running
+  ansible.builtin.systemd:
+    name: corosync-qnetd
+    state: started
+    enabled: true

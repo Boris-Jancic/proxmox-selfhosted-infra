@@ -1,0 +1,31 @@
+---
+- name: Render node firewall
+  ansible.builtin.include_tasks: pve_file.yml
+  vars:
+    pve_fw_file_src: host.fw.j2
+    pve_fw_file_dest: "/etc/pve/nodes/{{ pve_node }}/host.fw"
+
+# Rules only apply to a NIC with firewall=1. pct/qm only act on local guests.
+- name: Read config of local firewalled guests
+  ansible.builtin.command: >-
+    {{ 'pct' if guest in groups['lxc_containers'] else 'qm' }} config
+    {{ hostvars[guest].ctid | default(hostvars[guest].id) }}
+  loop: "{{ pve_fw_guests | select('in', pve_fw_local_guests) | list }}"
+  loop_control:
+    loop_var: guest
+  register: pve_fw_guest_cfg
+  changed_when: false
+  check_mode: false
+
+- name: Enable firewall flag on net0
+  ansible.builtin.command: >-
+    {{ 'pct' if item.guest in groups['lxc_containers'] else 'qm' }} set
+    {{ hostvars[item.guest].ctid | default(hostvars[item.guest].id) }}
+    --net0 {{ net0 | regex_replace(',?firewall=[01]', '') }},firewall=1
+  vars:
+    net0: "{{ item.stdout | regex_search('^net0: (.*)$', '\\1', multiline=True) | first }}"
+  loop: "{{ pve_fw_guest_cfg.results }}"
+  loop_control:
+    label: "{{ item.guest }}"
+  when: "'firewall=1' not in net0"
+  changed_when: true

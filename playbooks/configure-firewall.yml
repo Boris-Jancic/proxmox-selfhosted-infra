@@ -1,0 +1,9 @@
+---
+# Proxmox firewall: datacenter + guest rules from the primary node, node rules
+# and guest NIC flags on each node. Rules come from roles/pve_firewall/defaults
+# and `firewall_in` / `firewall_out` on guests in inventory.yml.
+- name: Configure Proxmox firewall
+  hosts: proxmox_nodes
+  gather_facts: false
+  roles:
+    - pve_firewall

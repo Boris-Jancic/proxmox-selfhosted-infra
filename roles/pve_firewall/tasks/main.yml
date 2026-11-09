@@ -1,0 +1,13 @@
+---
+- name: Create firewall staging directory
+  ansible.builtin.file:
+    path: "{{ pve_fw_stage_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Datacenter and guest rules
+  ansible.builtin.include_tasks: cluster.yml
+  when: pve_node == proxmox_node
+
+- name: Node rules and guest NIC flags
+  ansible.builtin.include_tasks: node.yml

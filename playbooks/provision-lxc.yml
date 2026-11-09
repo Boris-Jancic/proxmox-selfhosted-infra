@@ -48,7 +48,7 @@
           size: "{{ hostvars[item].disk }}"
 
         netif:
-          net0: "name=eth0,bridge=vmbr0,ip={{ hostvars[item].ansible_host }}{{ network_prefix }},gw={{ network_gateway }}"
+          net0: "name=eth0,bridge=vmbr0,ip={{ hostvars[item].ansible_host }}{{ network_prefix }},gw={{ network_gateway }},firewall=1"
 
         features:
           - nesting=1

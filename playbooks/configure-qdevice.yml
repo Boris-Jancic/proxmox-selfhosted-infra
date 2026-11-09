@@ -1,0 +1,9 @@
+---
+# Third quorum vote for the two-node cluster: corosync-qnetd on the host in the
+# `qdevice` group, corosync-qdevice on both nodes, then `pvecm qdevice setup`
+# from the primary. No-op while the `qdevice` group is empty.
+- name: Configure corosync QDevice
+  hosts: proxmox_nodes:qdevice
+  gather_facts: false
+  roles:
+    - qdevice
