@@ -3,10 +3,22 @@ global:
   scrape_interval: {{ prometheus_scrape_interval }}
   evaluation_interval: {{ prometheus_scrape_interval }}
 
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
 scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ["localhost:9090"]
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["alertmanager:9093"]
 
   - job_name: node
     static_configs:
@@ -22,6 +34,25 @@ scrape_configs:
       node: ["0"]
     static_configs:
       - targets: ["{{ pve_exporter_cluster_target }}"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: pve-exporter:9221
+
+  - job_name: pve-node
+    metrics_path: /pve
+    params:
+      module: [default]
+      cluster: ["0"]
+      node: ["1"]
+    static_configs:
+      - targets:
+{% for n in groups['proxmox_nodes'] %}
+          - "{{ hostvars[n].ansible_host }}"
+{% endfor %}
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

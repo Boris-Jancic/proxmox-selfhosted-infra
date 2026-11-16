@@ -15,6 +15,9 @@
     - { path: "{{ grafana_provisioning_dir }}/datasources", owner: 0 }
     - { path: "{{ grafana_provisioning_dir }}/dashboards", owner: 0 }
     - { path: "{{ grafana_dashboards_dir }}", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/alertmanager", owner: 0 }
+    - { path: "{{ alertmanager_config_dir }}", owner: 65534 }
+    - { path: "{{ alertmanager_data_dir }}", owner: 65534 }
   loop_control:
     label: "{{ item.path }}"
 
@@ -38,6 +41,26 @@
     group: root
     mode: "0644"
   notify: Reload prometheus
+
+- name: Render alert rules
+  ansible.builtin.template:
+    src: alert-rules.yml.j2
+    dest: "{{ monitoring_install_dir }}/prometheus/config/alert-rules.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload prometheus
+
+# Holds the Telegram bot token: readable only by the container user (nobody).
+- name: Render alertmanager.yml
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    owner: "65534"
+    group: "65534"
+    mode: "0600"
+  no_log: true
+  notify: Reload alertmanager
 
 - name: Render Grafana provisioning
   ansible.builtin.template:

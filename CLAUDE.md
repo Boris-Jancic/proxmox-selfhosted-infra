@@ -95,7 +95,7 @@ Roles: `caddy`, `pihole`, `vaultwarden`, `uptime-kuma`, `homepage`, `portainer`,
 | vaultwarden (102) | pve-worker | .102 | Docker compose | 8080 |
 | uptime-kuma (103) | pve-worker | .103 | Docker compose | 3001 |
 | homepage (104) | pve-worker | .104 | Docker compose | 3000 |
-| monitoring (105) | pve-worker | .105 | Docker compose | Grafana 3000, Prometheus 9090 (LAN only) |
+| monitoring (105) | pve-worker | .105 | Docker compose | Grafana 3000, Prometheus 9090, Alertmanager 9093 (LAN only) |
 | ubuntu-vm1 (VM 110) | pve-brain | .110 | Docker compose | Portainer 9000, Nextcloud AIO 8080 (admin) / 11000, blog 3000 |
 | ubuntu-vm1 (VM 110) | pve-brain | .110 | systemd | GitHub Actions runner (`roles/github_runner`) |
 | ubuntu-vm2/3 (VM 120/130) | pve-worker | .120/.130 | k8s VMs, provisioned only (no configure role) | — |

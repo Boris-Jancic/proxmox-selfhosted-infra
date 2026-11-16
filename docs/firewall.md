@@ -27,7 +27,7 @@ flowchart LR
     subgraph apps["Firewalled guests: inbound DROP by default"]
         direction TB
         web["Behind Caddy<br/>Vaultwarden :8080 · Kuma :3001<br/>Homepage :3000 · Pi-hole admin :80<br/>Nextcloud :11000 · blog :3000"]
-        lanonly["LAN-only<br/>Pi-hole DNS :53<br/>Portainer :9000/:9443<br/>Grafana :3000 · Prometheus :9090<br/>Caddy :80"]
+        lanonly["LAN-only<br/>Pi-hole DNS :53<br/>Portainer :9000/:9443<br/>Grafana :3000 · Prometheus :9090 · Alertmanager :9093<br/>Caddy :80"]
         adminonly["Nodes-only<br/>SSH :22 on every guest<br/>Nextcloud AIO admin :8080/:8443"]
     end
 
@@ -51,7 +51,7 @@ flowchart LR
 | Cloudflare tunnel → Caddy | each app | its app port, 8006 on pve-brain | `caddy` alias, `api_clients` IPSet |
 | Homepage, Uptime Kuma | apps, both nodes | app ports, 8006 | `monitors`, `api_clients` IPSets |
 | Monitoring CT | both nodes | 8006, 9100 | `api_clients`, `metrics_scrapers` IPSets |
-| Any LAN client | Pi-hole / Caddy / Portainer / Grafana, Prometheus | 53 / 80 / 9000, 9443 / 3000, 9090 | `lan` alias (DNS: any source) |
+| Any LAN client | Pi-hole / Caddy / Portainer / Grafana, Prometheus | 53 / 80 / 9000, 9443 / 3000, 9090, 9093 | `lan` alias (DNS: any source) |
 | Nodes (+ `pve_fw_admin_cidrs`) | nodes, every firewalled guest | 22, 8006, console, all app ports | `management` IPSet |
 | Node ↔ node | corosync | UDP 5405-5412 | built in |
 | VM 110 | either node | anything (new connections) | `OUT DROP -dest +pve_nodes` |

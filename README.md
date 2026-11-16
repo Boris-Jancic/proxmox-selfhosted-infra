@@ -43,7 +43,7 @@ The `pve_node` value in `inventory.yml` sets the node of each guest. Refer to [d
          ├──▶  nextcloud-aio  .110   file sync and office (Ubuntu VM)
          └──▶  proxmox UI     .10    cluster web UI
 
-  LAN only (192.168.88.0/24): portainer .110:9000/9443, grafana .105:3000, prometheus .105:9090
+  LAN only (192.168.88.0/24): portainer .110:9000/9443, grafana .105:3000, prometheus .105:9090, alertmanager .105:9093
 
   [pve-brain]: runs Ansible, manages CTs and VMs through the local API (127.0.0.1:8006)
 ```
@@ -70,7 +70,7 @@ For the diagram and the rules, refer to [docs/firewall.md](docs/firewall.md). Fo
 | vaultwarden | CT 102 | pve-worker | .102 | 8080 | [vaultwarden](docs/vaultwarden.md) |
 | uptime-kuma | CT 103 | pve-worker | .103 | 3001 | [uptime-kuma](docs/uptime-kuma.md) |
 | homepage | CT 104 | pve-worker | .104 | 3000 | [homepage](docs/homepage.md) |
-| prometheus + grafana | CT 105 | pve-worker | .105 | 9090, 3000 (LAN only) | [monitoring](docs/monitoring.md) |
+| prometheus + alertmanager + grafana | CT 105 | pve-worker | .105 | 9090, 9093, 3000 (LAN only) | [monitoring](docs/monitoring.md) |
 | portainer | VM 110 | pve-brain | .110 | 9000, 9443 (LAN only) | [portainer](docs/portainer.md) |
 | nextcloud-aio | VM 110 | pve-brain | .110 | 8080 / 11000 | [nextcloud](docs/nextcloud.md) |
 | GitHub Actions runner | VM 110 | pve-brain | .110 | None | `roles/github_runner` |

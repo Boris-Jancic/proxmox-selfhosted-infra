@@ -1,0 +1,89 @@
+{% raw %}
+# Managed by Ansible (roles/monitoring). Edits here are overwritten.
+groups:
+  - name: meta
+    rules:
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: Always firing; proves the alert pipeline works end to end.
+
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} target {{ $labels.instance }} is unreachable"
+
+  - name: proxmox
+    rules:
+      - alert: PveNodeDown
+        expr: pve_up{id=~"node/.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Proxmox node {{ $labels.id }} is offline"
+
+      - alert: PveGuestStopped
+        expr: >-
+          (pve_up{id=~"(qemu|lxc)/.*"} == 0)
+          * on(id) group_left(name, node) pve_guest_info
+          and on(id) (max by (id) (pve_onboot_status) == 1)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.name }} ({{ $labels.id }} on {{ $labels.node }}) is stopped but has onboot=1"
+{% endraw %}
+
+      - alert: PveStorageFull
+        expr: >-
+          pve_disk_usage_bytes{id=~"storage/.*"} / pve_disk_size_bytes > {{ alert_disk_used_ratio }}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}Storage {{ $labels.id }} is {{ $value | humanizePercentage }} full{% endraw %}"
+
+      - alert: PveGuestDiskFull
+        expr: >-
+          (pve_disk_usage_bytes{id=~"lxc/.*"} / pve_disk_size_bytes > {{ alert_disk_used_ratio }})
+          * on(id) group_left(name) pve_guest_info
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}CT {{ $labels.name }} root disk is {{ $value | humanizePercentage }} full{% endraw %}"
+
+  - name: node
+    rules:
+      - alert: HostDiskFull
+        expr: >-
+          1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs|fuse.*"}
+          / node_filesystem_size_bytes > {{ alert_disk_used_ratio }}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}{{ $labels.instance }} {{ $labels.mountpoint }} is {{ $value | humanizePercentage }} full{% endraw %}"
+
+      - alert: HostHighMemory
+        expr: 1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > {{ alert_memory_used_ratio }}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}{{ $labels.instance }} memory at {{ $value | humanizePercentage }}{% endraw %}"
+
+      - alert: HostHighCpu
+        expr: >-
+          1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) > {{ alert_cpu_used_ratio }}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}{{ $labels.instance }} CPU at {{ $value | humanizePercentage }}{% endraw %}"

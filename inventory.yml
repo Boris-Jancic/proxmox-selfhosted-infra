@@ -171,6 +171,7 @@ all:
           firewall_in:
             - { dport: 3000, source: lan, comment: grafana }
             - { dport: 9090, source: lan, comment: prometheus }
+            - { dport: 9093, source: lan, comment: alertmanager }
 
         caddy:
           ctid: 100

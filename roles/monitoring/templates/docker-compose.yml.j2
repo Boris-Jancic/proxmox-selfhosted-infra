@@ -14,6 +14,19 @@ services:
       - {{ monitoring_install_dir }}/prometheus/config:/etc/prometheus:ro
       - {{ prometheus_data_dir }}:/prometheus
 
+  alertmanager:
+    image: {{ alertmanager_image }}
+    container_name: alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "{{ alertmanager_host_port }}:9093"
+    volumes:
+      - {{ alertmanager_config_dir }}:/etc/alertmanager:ro
+      - {{ alertmanager_data_dir }}:/alertmanager
+
   pve-exporter:
     image: {{ pve_exporter_image }}
     container_name: pve-exporter

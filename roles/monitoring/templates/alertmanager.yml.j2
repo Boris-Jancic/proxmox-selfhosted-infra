@@ -1,0 +1,33 @@
+# Managed by Ansible (roles/monitoring). Edits here are overwritten.
+route:
+  receiver: telegram
+  group_by: [alertname, instance, id]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: {{ alertmanager_repeat_interval }}
+  routes:
+    - matchers: ['alertname = "Watchdog"']
+      receiver: {{ 'watchdog' if alertmanager_watchdog_url else 'blackhole' }}
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 1m
+
+inhibit_rules:
+  - source_matchers: ['alertname = "PveNodeDown"']
+    target_matchers: ['alertname =~ "TargetDown|PveGuestStopped"']
+    equal: []
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token: "{{ alertmanager_telegram_bot_token }}"
+        chat_id: {{ alertmanager_telegram_chat_id | int }}
+        parse_mode: HTML
+        send_resolved: true
+  - name: blackhole
+{% if alertmanager_watchdog_url %}
+  - name: watchdog
+    webhook_configs:
+      - url: "{{ alertmanager_watchdog_url }}"
+        send_resolved: false
+{% endif %}
