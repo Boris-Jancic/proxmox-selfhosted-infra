@@ -20,11 +20,16 @@ pve_fw_stage_dir: /root/.cache/pve_firewall
 pve_fw_lan_cidr: "192.168.88.0/24"
 
 # Guests that may reach node APIs on 8006 (Caddy route, Homepage widgets,
-# Uptime Kuma checks).
+# Uptime Kuma checks, pve-exporter).
 pve_fw_api_clients:
   - caddy
   - homepage
   - uptime-kuma
+  - monitoring
+
+# Guests that scrape node_exporter (9100) on the nodes.
+pve_fw_metrics_scrapers:
+  - monitoring
 
 # Guests that poll other guests' app ports (dashboards, monitors).
 pve_fw_monitors:

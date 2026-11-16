@@ -33,7 +33,13 @@ lan {{ pve_fw_lan_cidr }}
 {{ hostvars[h].ansible_host }} # {{ h }}
 {% endfor %}
 
+[IPSET metrics_scrapers]
+{% for h in pve_fw_metrics_scrapers %}
+{{ hostvars[h].ansible_host }} # {{ h }}
+{% endfor %}
+
 # Node rules. SSH/GUI from +management and corosync between nodes are built in.
 [RULES]
-IN ACCEPT -source +api_clients -p tcp -dport 8006 -log nolog # caddy route, homepage + kuma checks
+IN ACCEPT -source +api_clients -p tcp -dport 8006 -log nolog # caddy route, homepage + kuma checks, pve-exporter
+IN ACCEPT -source +metrics_scrapers -p tcp -dport 9100 -log nolog # node_exporter
 IN Ping(ACCEPT) -source lan -log nolog

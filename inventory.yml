@@ -154,6 +154,24 @@ all:
           firewall_in:
             - { dport: 3000, source: [caddy, +management] }
 
+        monitoring:
+          ctid: 105
+          ansible_host: 192.168.88.105
+          pve_node: pve-worker
+          memory: 1024
+          disk: 16
+          cores: 2
+          description: |
+            # LXC - Monitoring
+            Prometheus + Grafana + pve-exporter
+
+            Do not edit manually.
+          lxc_docker_host: true
+          # LAN-only like Portainer: no Caddy route, no tunnel hostname.
+          firewall_in:
+            - { dport: 3000, source: lan, comment: grafana }
+            - { dport: 9090, source: lan, comment: prometheus }
+
         caddy:
           ctid: 100
           ansible_host: 192.168.88.100

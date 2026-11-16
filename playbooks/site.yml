@@ -54,6 +54,10 @@
   ansible.builtin.import_playbook: configure-nextcloud.yml
   tags: [configure, nextcloud]
 
+- name: Configure monitoring
+  ansible.builtin.import_playbook: configure-monitoring.yml
+  tags: [configure, monitoring]
+
 - name: Configure Caddy
   ansible.builtin.import_playbook: configure-caddy.yml
   tags: [configure, caddy]

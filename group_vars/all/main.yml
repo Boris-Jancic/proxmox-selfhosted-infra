@@ -40,6 +40,12 @@ proxmox_homepage_token_id: "homepage"
 # repo: export it as PVE_TOKEN_SECRET where the server runs.
 proxmox_mcp_token_id: "mcp"
 
+# Token for pve-exporter on the monitoring CT (roles/monitoring). Same model:
+# privilege separation on, PVEAuditor on / (tag `tokens`). Create in Proxmox
+# GUI: Datacenter → API Tokens → Add, user root@pam, token ID "prometheus",
+# privilege separation on. Secret → proxmox_prometheus_token_secret.
+proxmox_prometheus_token_id: "prometheus"
+
 # LXC defaults
 proxmox_template_vmid: 799
 proxmox_storage: "data-hdd"

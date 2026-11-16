@@ -1,0 +1,12 @@
+# Managed by Ansible (roles/monitoring).
+apiVersion: 1
+
+providers:
+  - name: homelab
+    folder: Homelab
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana-dashboards

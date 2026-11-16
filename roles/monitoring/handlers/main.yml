@@ -1,0 +1,12 @@
+---
+- name: Reload prometheus
+  ansible.builtin.command: docker compose kill -s SIGHUP prometheus
+  args:
+    chdir: "{{ monitoring_install_dir }}"
+  changed_when: true
+
+- name: Restart grafana
+  ansible.builtin.command: docker compose restart grafana
+  args:
+    chdir: "{{ monitoring_install_dir }}"
+  changed_when: true

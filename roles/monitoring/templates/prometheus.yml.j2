@@ -1,0 +1,31 @@
+# Managed by Ansible (roles/monitoring). Edits here are overwritten.
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+  evaluation_interval: {{ prometheus_scrape_interval }}
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: node
+    static_configs:
+{% for n in groups['proxmox_nodes'] %}
+      - targets: ["{{ hostvars[n].ansible_host }}:{{ node_exporter_port }}"]
+{% endfor %}
+
+  - job_name: pve
+    metrics_path: /pve
+    params:
+      module: [default]
+      cluster: ["1"]
+      node: ["0"]
+    static_configs:
+      - targets: ["{{ pve_exporter_cluster_target }}"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: pve-exporter:9221

@@ -1,0 +1,31 @@
+---
+# Pinned tags; bump deliberately after reading release notes.
+prometheus_image: "prom/prometheus:v3.15.1"
+grafana_image: "grafana/grafana:13.2.6"
+pve_exporter_image: "prompve/prometheus-pve-exporter:3.11.0"
+
+monitoring_install_dir: /opt/monitoring
+prometheus_data_dir: "{{ monitoring_install_dir }}/prometheus/data"
+grafana_data_dir: "{{ monitoring_install_dir }}/grafana/data"
+grafana_provisioning_dir: "{{ monitoring_install_dir }}/grafana/provisioning"
+grafana_dashboards_dir: "{{ monitoring_install_dir }}/grafana/dashboards"
+
+prometheus_host_port: 9090
+grafana_host_port: 3000
+
+prometheus_scrape_interval: 30s
+prometheus_retention_time: 30d
+prometheus_retention_size: 8GB
+
+# Read-only PVE token (PVEAuditor on /), managed by roles/proxmox_host --tags tokens.
+pve_exporter_user: "{{ proxmox_api_user }}"
+pve_exporter_token_id: "{{ proxmox_prometheus_token_id }}"
+
+node_exporter_port: 9100
+
+# Any node's API returns the whole cluster's guests, nodes and storage.
+pve_exporter_cluster_target: "{{ hostvars[groups['proxmox_nodes'][0]].ansible_host }}"
+
+grafana_dashboards_remote:
+  - name: node-exporter-full
+    url: "https://raw.githubusercontent.com/rfmoz/grafana-dashboards/b07d8a90d8fadd112e9ac841b777ee863cda850b/prometheus/node-exporter-full.json"

@@ -1,0 +1,3 @@
+---
+# Debian's package: node_exporter as a systemd unit on :9100.
+node_exporter_package: prometheus-node-exporter

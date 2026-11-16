@@ -1,0 +1,15 @@
+---
+# No recommends: skips prometheus-node-exporter-collectors (smartmon/apt timers).
+- name: Install node_exporter
+  ansible.builtin.apt:
+    name: "{{ node_exporter_package }}"
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure node_exporter is running
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: started
+    enabled: true

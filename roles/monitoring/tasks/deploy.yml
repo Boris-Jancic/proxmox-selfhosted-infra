@@ -1,0 +1,82 @@
+---
+- name: Ensure monitoring directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: "0755"
+  loop:
+    - { path: "{{ monitoring_install_dir }}", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/prometheus", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/prometheus/config", owner: 0 }
+    - { path: "{{ prometheus_data_dir }}", owner: 65534 }
+    - { path: "{{ grafana_data_dir }}", owner: 472 }
+    - { path: "{{ grafana_provisioning_dir }}/datasources", owner: 0 }
+    - { path: "{{ grafana_provisioning_dir }}/dashboards", owner: 0 }
+    - { path: "{{ grafana_dashboards_dir }}", owner: 0 }
+  loop_control:
+    label: "{{ item.path }}"
+
+# Holds the PVE token and Grafana admin password: root-only, never logged.
+- name: Render docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_install_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+# Directory bind mount: the template's atomic replace would leave a file mount
+# pointing at the old inode, and SIGHUP would reload stale config.
+- name: Render prometheus.yml
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_install_dir }}/prometheus/config/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload prometheus
+
+- name: Render Grafana provisioning
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ grafana_provisioning_dir }}/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: grafana-datasources.yml.j2, dest: datasources/prometheus.yml }
+    - { src: grafana-dashboards.yml.j2, dest: dashboards/homelab.yml }
+  notify: Restart grafana
+
+# Grafana re-reads dashboard files on its own; no restart needed.
+- name: Copy bundled dashboards
+  ansible.builtin.copy:
+    src: dashboards/
+    dest: "{{ grafana_dashboards_dir }}/"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Download community dashboards
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ grafana_dashboards_dir }}/{{ item.name }}.json"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ grafana_dashboards_remote }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Bring monitoring stack up
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ monitoring_install_dir }}"
+  register: compose_up
+  changed_when: >
+    'Started' in compose_up.stderr
+    or 'Recreated' in compose_up.stderr
+    or 'Created' in compose_up.stderr
