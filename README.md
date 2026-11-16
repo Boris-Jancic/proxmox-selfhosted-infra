@@ -4,7 +4,7 @@
 [![Ansible](https://img.shields.io/badge/Ansible-IaC-red?logo=ansible)](https://www.ansible.com/)
 [![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?logo=proxmox)](https://www.proxmox.com/)
 [![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)](https://www.docker.com/)
-<img width="1261" height="449" alt="Screenshot_2026-05-26_15-53-23" src="https://github.com/user-attachments/assets/b81695c1-b942-479b-ae0b-6b604ce2599f" />
+<p align="center"><img src="docs/images/architecture.svg" alt="Architecture: Cloudflare tunnel to Caddy, two-node Proxmox cluster skylab (pve-brain, pve-worker) on LAN 192.168.88.0/24, managed by Ansible" width="100%"></p>
 
 This repository uses Ansible to manage a two-node Proxmox VE cluster (`skylab`). All configuration is code.
 

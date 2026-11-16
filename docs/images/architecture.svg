@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="t d">
+  <title id="t">proxmox-selfhosted-infra architecture</title>
+  <desc id="d">Two-node Proxmox VE cluster skylab managed by Ansible. Cloudflare Zero Trust tunnel terminates on Caddy, which proxies to services on pve-brain and pve-worker inside LAN 192.168.88.0/24.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111b30"/>
+    </linearGradient>
+    <linearGradient id="pve" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e57000"/>
+      <stop offset="1" stop-color="#f5a524"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#1a2540" stroke-width="1"/>
+    </pattern>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#f38020"/>
+    </marker>
+    <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8b98ad"/>
+    </marker>
+    <style>
+      text{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#e6edf3}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+      .h1{font-size:34px;font-weight:700}
+      .sub{font-size:16px;fill:#8b98ad}
+      .lbl{font-size:13px;fill:#8b98ad;letter-spacing:.06em}
+      .node{font-size:20px;font-weight:700}
+      .nip{font-size:14px;fill:#f5a524}
+      .hw{font-size:12px;fill:#8b98ad}
+      .svc{font-size:15px;font-weight:600}
+      .id{font-size:11px;font-weight:700;fill:#0b1220}
+      .port{font-size:12.5px;fill:#8b98ad}
+      .chip{font-size:12px;fill:#c9d4e3}
+      .card{fill:#131d33;stroke:#24324f;stroke-width:1.2}
+      .row{fill:#18233d;stroke:#2a3a5c;stroke-width:1}
+      .ct{fill:#3fb950}
+      .vm{fill:#58a6ff}
+      .ft{font-size:14px;font-weight:600}
+      .fd{font-size:12px;fill:#8b98ad}
+    </style>
+  </defs>
+
+  <rect width="1280" height="720" rx="18" fill="url(#bg)"/>
+  <rect width="1280" height="720" rx="18" fill="url(#grid)" opacity=".55"/>
+
+  <text x="48" y="66" class="h1">proxmox-selfhosted-infra</text>
+  <text x="48" y="96" class="sub">Two-node Proxmox VE cluster <tspan class="mono" fill="#f5a524">skylab</tspan>, provisioned and configured end to end with Ansible.</text>
+  <g transform="translate(1232 58)">
+    <rect x="-262" y="-22" width="262" height="34" rx="17" fill="#18233d" stroke="#2a3a5c"/>
+    <circle cx="-244" cy="-5" r="5" fill="#3fb950"/>
+    <text x="-232" y="0" class="chip">PVE firewall · default DROP</text>
+  </g>
+
+  <g>
+    <rect x="48" y="150" width="210" height="70" rx="12" class="card"/>
+    <text x="68" y="180" class="svc">Internet</text>
+    <text x="68" y="202" class="port">users, phones, browsers</text>
+
+    <path d="M153 222V262" stroke="#f38020" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="48" y="266" width="210" height="104" rx="12" fill="#2a1a0c" stroke="#f38020" stroke-width="1.4"/>
+    <g transform="translate(68 287)" fill="#f38020">
+      <path d="M0 20a10 10 0 0 1 9-10a13 13 0 0 1 25-2a9 9 0 0 1 12 12z"/>
+    </g>
+    <text x="122" y="303" class="svc">Cloudflare</text>
+    <text x="68" y="330" class="port">DNS + Zero Trust tunnel</text>
+    <text x="68" y="350" class="port">TLS terminates here</text>
+
+    <rect x="48" y="420" width="210" height="96" rx="12" class="card"/>
+    <text x="68" y="448" class="svc">Home router</text>
+    <text x="68" y="470" class="port">no inbound ports open</text>
+    <text x="68" y="490" class="port">LAN DHCP DNS → Pi-hole</text>
+  </g>
+
+  <rect x="300" y="132" width="932" height="420" rx="16" fill="none" stroke="#2a3a5c" stroke-width="1.4" stroke-dasharray="6 6"/>
+  <rect x="320" y="122" width="236" height="22" fill="#0e172a"/>
+  <text x="328" y="138" class="lbl mono">LAN 192.168.88.0/24</text>
+
+  <g>
+    <rect x="324" y="162" width="432" height="370" rx="14" class="card"/>
+    <rect x="324" y="162" width="432" height="4" rx="2" fill="url(#pve)"/>
+    <text x="344" y="196" class="node">pve-brain</text>
+    <text x="448" y="196" class="nip mono">.10</text>
+    <rect x="582" y="180" width="154" height="24" rx="12" fill="#2a1a0c" stroke="#e57000"/>
+    <text x="659" y="196" class="chip" text-anchor="middle">primary · Ansible host</text>
+    <text x="344" y="218" class="hw">IdeaCentre 200 · i3-5005U · 12 GB · SSD + 1 TB HDD</text>
+
+    <rect x="340" y="234" width="400" height="54" rx="10" class="row"/>
+    <rect x="352" y="252" width="44" height="18" rx="5" class="ct"/><text x="374" y="265" class="id" text-anchor="middle">CT 100</text>
+    <text x="408" y="258" class="svc">Caddy + cloudflared</text>
+    <text x="408" y="278" class="port">reverse proxy :80 · 7 routes · tunnel endpoint</text>
+    <text x="728" y="266" class="nip mono" text-anchor="end">.100</text>
+
+    <rect x="340" y="298" width="400" height="54" rx="10" class="row"/>
+    <rect x="352" y="316" width="44" height="18" rx="5" class="ct"/><text x="374" y="329" class="id" text-anchor="middle">CT 101</text>
+    <text x="408" y="322" class="svc">Pi-hole</text>
+    <text x="408" y="342" class="port">network DNS + ad blocking :53</text>
+    <text x="728" y="330" class="nip mono" text-anchor="end">.101</text>
+
+    <rect x="340" y="362" width="400" height="154" rx="10" class="row"/>
+    <rect x="352" y="380" width="44" height="18" rx="5" class="vm"/><text x="374" y="393" class="id" text-anchor="middle">VM 110</text>
+    <text x="408" y="386" class="svc">ubuntu-vm1</text>
+    <text x="408" y="406" class="port">Docker host · cloud-init</text>
+    <text x="728" y="394" class="nip mono" text-anchor="end">.110</text>
+    <g class="chip">
+      <rect x="356" y="420" width="184" height="40" rx="8" fill="#0f1830" stroke="#2a3a5c"/>
+      <text x="368" y="437" class="svc" style="font-size:13px">Nextcloud AIO</text><text x="368" y="452" class="port">:11000</text>
+      <rect x="548" y="420" width="184" height="40" rx="8" fill="#0f1830" stroke="#2a3a5c"/>
+      <text x="560" y="437" class="svc" style="font-size:13px">Portainer</text><text x="560" y="452" class="port">:9000 · LAN only</text>
+      <rect x="356" y="466" width="184" height="40" rx="8" fill="#0f1830" stroke="#2a3a5c"/>
+      <text x="368" y="483" class="svc" style="font-size:13px">Next.js blog</text><text x="368" y="498" class="port">:3000 · Portainer stack</text>
+      <rect x="548" y="466" width="184" height="40" rx="8" fill="#0f1830" stroke="#2a3a5c"/>
+      <text x="560" y="483" class="svc" style="font-size:13px">GitHub runner</text><text x="560" y="498" class="port">self-hosted · systemd</text>
+    </g>
+  </g>
+
+  <g>
+    <rect x="780" y="162" width="432" height="370" rx="14" class="card"/>
+    <rect x="780" y="162" width="432" height="4" rx="2" fill="url(#pve)"/>
+    <text x="800" y="196" class="node">pve-worker</text>
+    <text x="916" y="196" class="nip mono">.20</text>
+    <rect x="1088" y="180" width="104" height="24" rx="12" fill="#18233d" stroke="#2a3a5c"/>
+    <text x="1140" y="196" class="chip" text-anchor="middle">compute</text>
+    <text x="800" y="218" class="hw">HP t640 · Ryzen R1505G · 13 GiB · 256 GB NVMe</text>
+
+    <rect x="796" y="234" width="400" height="54" rx="10" class="row"/>
+    <rect x="808" y="252" width="44" height="18" rx="5" class="ct"/><text x="830" y="265" class="id" text-anchor="middle">CT 102</text>
+    <text x="864" y="258" class="svc">Vaultwarden</text>
+    <text x="864" y="278" class="port">password manager :8080</text>
+    <text x="1184" y="266" class="nip mono" text-anchor="end">.102</text>
+
+    <rect x="796" y="298" width="400" height="54" rx="10" class="row"/>
+    <rect x="808" y="316" width="44" height="18" rx="5" class="ct"/><text x="830" y="329" class="id" text-anchor="middle">CT 103</text>
+    <text x="864" y="322" class="svc">Uptime Kuma</text>
+    <text x="864" y="342" class="port">uptime monitoring :3001</text>
+    <text x="1184" y="330" class="nip mono" text-anchor="end">.103</text>
+
+    <rect x="796" y="362" width="400" height="54" rx="10" class="row"/>
+    <rect x="808" y="380" width="44" height="18" rx="5" class="ct"/><text x="830" y="393" class="id" text-anchor="middle">CT 104</text>
+    <text x="864" y="386" class="svc">Homepage</text>
+    <text x="864" y="406" class="port">service dashboard :3000</text>
+    <text x="1184" y="394" class="nip mono" text-anchor="end">.104</text>
+
+    <rect x="796" y="426" width="400" height="90" rx="10" class="row"/>
+    <rect x="808" y="444" width="44" height="18" rx="5" class="vm"/><text x="830" y="457" class="id" text-anchor="middle">VM 120</text>
+    <rect x="808" y="468" width="44" height="18" rx="5" class="vm"/><text x="830" y="481" class="id" text-anchor="middle">VM 130</text>
+    <text x="864" y="458" class="svc">k8s master / worker</text>
+    <text x="864" y="478" class="port">Ubuntu cloud-init · provisioned only</text>
+    <text x="1184" y="458" class="nip mono" text-anchor="end">.120</text>
+    <text x="1184" y="478" class="nip mono" text-anchor="end">.130</text>
+  </g>
+
+  <path d="M260 318C292 318 300 261 336 261" fill="none" stroke="#f38020" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr)"/>
+  <text x="279" y="252" class="port" style="fill:#f38020">tunnel</text>
+  <path d="M260 468C296 468 300 325 336 325" fill="none" stroke="#8b98ad" stroke-width="1.6" marker-end="url(#arrg)"/>
+  <text x="264" y="400" class="port">DNS</text>
+
+  <g>
+    <rect x="48" y="580" width="1184" height="100" rx="14" fill="#0f1830" stroke="#24324f"/>
+    <text x="72" y="608" class="lbl">AUTOMATION &amp; GUARDRAILS</text>
+
+    <rect x="72" y="620" width="16" height="16" rx="4" fill="#ee4c4c"/>
+    <text x="96" y="633" class="ft">Ansible</text>
+    <text x="72" y="658" class="fd">provision via PVE API · configure via SSH</text>
+
+    <rect x="364" y="620" width="16" height="16" rx="4" fill="#58a6ff"/>
+    <text x="388" y="633" class="ft">GitHub Actions CI</text>
+    <text x="364" y="658" class="fd">yamllint · ansible-lint · syntax-check</text>
+
+    <rect x="656" y="620" width="16" height="16" rx="4" fill="#3fb950"/>
+    <text x="680" y="633" class="ft">Secret scanning</text>
+    <text x="656" y="658" class="fd">gitleaks pre-commit + CI · vaulted secrets</text>
+
+    <rect x="948" y="620" width="16" height="16" rx="4" fill="#a371f7"/>
+    <text x="972" y="633" class="ft">cluster-mcp</text>
+    <text x="948" y="658" class="fd">read-only MCP server for AI agents</text>
+  </g>
+</svg>
