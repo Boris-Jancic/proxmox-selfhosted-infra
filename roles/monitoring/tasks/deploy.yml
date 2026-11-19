@@ -16,6 +16,7 @@
     - { path: "{{ grafana_provisioning_dir }}/dashboards", owner: 0 }
     - { path: "{{ grafana_dashboards_dir }}", owner: 0 }
     - { path: "{{ monitoring_install_dir }}/alertmanager", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/blackbox", owner: 0 }
     - { path: "{{ alertmanager_config_dir }}", owner: 65534 }
     - { path: "{{ alertmanager_data_dir }}", owner: 65534 }
   loop_control:
@@ -61,6 +62,15 @@
     mode: "0600"
   no_log: true
   notify: Reload alertmanager
+
+- name: Render blackbox.yml
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ monitoring_install_dir }}/blackbox/blackbox.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload blackbox exporter
 
 - name: Render Grafana provisioning
   ansible.builtin.template:

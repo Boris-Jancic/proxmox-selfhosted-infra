@@ -24,6 +24,12 @@ receivers:
         chat_id: {{ alertmanager_telegram_chat_id | int }}
         parse_mode: HTML
         send_resolved: true
+        message: |-{% raw %}
+          {{ range .Alerts -}}
+          {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Labels.alertname }}</b>{{ with .Labels.severity }} · {{ . }}{{ end }}
+          {{ with .Annotations.summary }}{{ . }}{{ else }}{{ range .Labels.SortedPairs }}{{ if ne .Name "alertname" }}{{ .Name }}={{ .Value }} {{ end }}{{ end }}{{ end }}
+          {{ end -}}
+{% endraw %}
   - name: blackhole
 {% if alertmanager_watchdog_url %}
   - name: watchdog

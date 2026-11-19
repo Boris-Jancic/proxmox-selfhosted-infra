@@ -26,6 +26,23 @@ scrape_configs:
       - targets: ["{{ hostvars[n].ansible_host }}:{{ node_exporter_port }}"]
 {% endfor %}
 
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+{% for t in blackbox_http_targets %}
+          - "{{ t }}"
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
   - job_name: pve
     metrics_path: /pve
     params:

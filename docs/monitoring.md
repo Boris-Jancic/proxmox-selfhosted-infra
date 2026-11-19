@@ -1,6 +1,6 @@
 # Monitoring
 
-Prometheus + Alertmanager + Grafana + [pve-exporter](https://github.com/prometheus-pve/prometheus-pve-exporter) as one Docker Compose stack, plus `node_exporter` on both Proxmox nodes.
+Prometheus + Alertmanager + Grafana + blackbox-exporter + [pve-exporter](https://github.com/prometheus-pve/prometheus-pve-exporter) as one Docker Compose stack, plus `node_exporter` on both Proxmox nodes.
 
 - **CT:** 105 | **Node:** pve-worker | **IP:** 192.168.88.105
 - **Grafana:** `http://192.168.88.105:3000` (LAN only, no Caddy route)
@@ -15,6 +15,7 @@ Prometheus + Alertmanager + Grafana + [pve-exporter](https://github.com/promethe
 | `pve` | pve-exporter → first node's API `:8006` | cluster-wide: nodes, guests, storage (`cluster=1`) |
 | `pve-node` | pve-exporter → each node's API | per-node config, e.g. guest `onboot` (`node=1`) |
 | `alertmanager` | itself | |
+| `blackbox-http` | blackbox-exporter → each URL in `blackbox_http_targets` | public sites, probed end to end through Cloudflare |
 | `prometheus` | itself | |
 
 Dashboards are provisioned into the **Homelab** folder:
@@ -28,6 +29,8 @@ Rules: `roles/monitoring/templates/alert-rules.yml.j2`. Alertmanager sends them 
 
 | Alert | Fires when | For |
 |---|---|---|
+| `WebsiteDown` | a URL in `blackbox_http_targets` fails (non-2xx, TLS error, timeout 10s) | 2m |
+| `WebsiteSlow` | a URL takes more than 5s to respond | 10m |
 | `TargetDown` | any scrape target (node_exporter, pve-exporter, ...) unreachable | 2m |
 | `PveNodeDown` | PVE reports a node offline (mutes `TargetDown` / `PveGuestStopped`) | 2m |
 | `PveGuestStopped` | a guest with `onboot=1` is stopped | 5m |
@@ -77,6 +80,8 @@ Defaults in `roles/monitoring/defaults/main.yml`.
 | `pve_exporter_image` | `prompve/prometheus-pve-exporter:3.11.0` | Image tag |
 | `alertmanager_image` | `prom/alertmanager:v0.34.2` | Image tag |
 | `alertmanager_repeat_interval` | `4h` | Re-notify interval while an alert fires |
+| `blackbox_exporter_image` | `prom/blackbox-exporter:v0.29.0` | Image tag |
+| `blackbox_http_targets` | `https://blog.<zone>` | Public URLs to probe |
 | `prometheus_retention_time` / `_size` | `30d` / `8GB` | TSDB retention, whichever hits first |
 | `prometheus_scrape_interval` | `30s` | Global scrape interval |
 | `pve_exporter_cluster_target` | first node in `proxmox_nodes` | Node whose API pve-exporter reads |

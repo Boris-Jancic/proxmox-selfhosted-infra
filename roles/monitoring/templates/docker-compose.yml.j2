@@ -27,6 +27,15 @@ services:
       - {{ alertmanager_config_dir }}:/etc/alertmanager:ro
       - {{ alertmanager_data_dir }}:/alertmanager
 
+  blackbox-exporter:
+    image: {{ blackbox_exporter_image }}
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - {{ monitoring_install_dir }}/blackbox:/etc/blackbox:ro
+
   pve-exporter:
     image: {{ pve_exporter_image }}
     container_name: pve-exporter
