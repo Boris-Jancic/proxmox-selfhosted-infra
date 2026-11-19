@@ -32,7 +32,7 @@
 2. Enforce the read-only ACL (also fails loudly if the token is missing):
 
    ```bash
-   ansible-playbook playbooks/configure-proxmox-host.yml --limit pve --tags tokens
+   ansible-playbook playbooks/platform/proxmox-host.yml --limit pve --tags tokens
    ```
 
 3. Install:

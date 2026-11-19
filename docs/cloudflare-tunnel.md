@@ -50,8 +50,8 @@ Cloudflare auto-creates the matching DNS `CNAME` for each hostname. The hostname
 ## 4. Deploy
 
 ```bash
-ansible-playbook playbooks/provision-lxc.yml      # if CT 100 not yet created
-ansible-playbook playbooks/configure-caddy.yml    # installs caddy + cloudflared, applies token
+ansible-playbook playbooks/provision/lxc.yml      # if CT 100 not yet created
+ansible-playbook playbooks/services/caddy.yml    # installs caddy + cloudflared, applies token
 ```
 
 ## 5. Verify
@@ -73,7 +73,7 @@ curl -I https://homepage.<zone>/
 |---|---|---|
 | `502 Bad Gateway` | Tunnel up but origin unreachable — Caddy not on `:80`, or service down | `ss -tlnp \| grep :80` on CT 100; ensure `caddy` active. Site addresses must keep the `http://` prefix so Caddy binds `:80`. |
 | `Server Not Found` / DNS error | No public hostname for that subdomain on this tunnel | Add it in step 3. A new tunnel starts with **zero** hostnames. |
-| `cloudflared` retry loop, high CPU | Wrong/old token | Replace `cloudflare_tunnel_token` in `secrets.yml`, re-run `configure-caddy.yml`. |
+| `cloudflared` retry loop, high CPU | Wrong/old token | Replace `cloudflare_tunnel_token` in `secrets.yml`, re-run `services/caddy.yml`. |
 | `control stream encountered a failure` repeating | Token belongs to a deleted/other tunnel | Recreate tunnel (step 1), new token, re-run. |
 | Subdomain works, app misbehaves (cookies/redirects) | Upstream expects HTTPS scheme | Caddy passes cloudflared's `X-Forwarded-Proto: https` (`caddy_trusted_proxies`); for self-signed HTTPS upstreams set `destination: https://…` (auto `tls_insecure_skip_verify`). |
 

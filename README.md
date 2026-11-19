@@ -97,11 +97,11 @@ cp group_vars/all/secrets.yml.example group_vars/all/secrets.yml
 ansible-playbook playbooks/site.yml
 
 # Or run each step.
-ansible-playbook playbooks/provision-lxc.yml
-ansible-playbook playbooks/provision-vms.yml
-ansible-playbook playbooks/configure-proxmox-host.yml
-ansible-playbook playbooks/configure-firewall.yml
-ansible-playbook playbooks/configure-<service>.yml
+ansible-playbook playbooks/provision/lxc.yml
+ansible-playbook playbooks/provision/vms.yml
+ansible-playbook playbooks/platform/proxmox-host.yml
+ansible-playbook playbooks/platform/firewall.yml
+ansible-playbook playbooks/services/<service>.yml
 
 # Run a part of site.yml.
 ansible-playbook playbooks/site.yml --tags configure
@@ -141,7 +141,10 @@ ansible-playbook playbooks/site.yml --tags caddy
 ansible.cfg          Ansible configuration
 inventory.yml        Nodes, guests (ctid/id, pve_node), host variables, caddy_routes, firewall_in
 group_vars/all/      main.yml (defaults), secrets.yml (ignored by Git), secrets.yml.example
-playbooks/           site, provision-lxc, provision-vms, configure-<service>, configure-proxmox-host, configure-firewall
+playbooks/site.yml   Everything, in order (tags: provision, configure, <service>)
+playbooks/provision/ lxc, vms: create guests through the Proxmox API
+playbooks/platform/  proxmox-host, firewall, qdevice: the nodes themselves
+playbooks/services/  one playbook per service, each runs one role
 roles/<service>/     defaults, tasks, templates, handlers, meta (docker dependency)
 docs/                Per-service setup guides
 tools/cluster-mcp/   Read-only MCP server for the cluster (Python, pytest)
@@ -151,11 +154,11 @@ tools/cluster-mcp/   Read-only MCP server for the cluster (Python, pytest)
 ## Adding a new service
 
 1. Add the host under `lxc_containers.hosts` in `inventory.yml`. Set `ctid`, `ansible_host`, `memory`, `disk` and `cores`. Set `pve_node` if the node is not pve-brain. If the host runs Docker, set `lxc_docker_host: true`.
-2. Run `provision-lxc.yml` to create the CT.
+2. Run `provision/lxc.yml` to create the CT.
 3. Copy the structure of `roles/pihole/`: `defaults/`, `tasks/main.yml` as the orchestrator, and `tasks/install.yml` with a `creates:` gate. For a Docker service, add `meta/main.yml` with `dependencies: [role: docker]`.
-4. Add `playbooks/configure-<service>.yml`, an inventory group with the same name, and an entry in `playbooks/site.yml`.
-5. Add `firewall_in` to the host. Open the app port to `caddy`, `+monitors` and `+management`. Then run `configure-firewall.yml` again.
-6. Add a `caddy_routes` entry to the `caddy` host. Then run `configure-caddy.yml` again.
+4. Add `playbooks/services/<service>.yml`, an inventory group with the same name, and an entry in `playbooks/site.yml`.
+5. Add `firewall_in` to the host. Open the app port to `caddy`, `+monitors` and `+management`. Then run `platform/firewall.yml` again.
+6. Add a `caddy_routes` entry to the `caddy` host. Then run `services/caddy.yml` again.
 
 ## Known limitations
 

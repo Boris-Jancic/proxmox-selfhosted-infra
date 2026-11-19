@@ -122,7 +122,7 @@ all:
             Do not edit manually.
           firewall_in:
             - { dport: 8080, source: [caddy, +monitors, +management] }
-          # Hosts docker; provision-lxc.yml will set
+          # Hosts docker; provision/lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
 
@@ -135,7 +135,7 @@ all:
           cores: 1
           firewall_in:
             - { dport: 3001, source: [caddy, +monitors, +management] }
-          # Hosts docker; provision-lxc.yml will set
+          # Hosts docker; provision/lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
 

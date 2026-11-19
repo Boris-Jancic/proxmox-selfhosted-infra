@@ -39,7 +39,7 @@ jobs:
       - name: Syntax check
         run: |
           rc=0
-          for pb in playbooks/*.yml; do
+          for pb in $(find playbooks -name '*.yml' | sort); do
             echo "::group::$pb"
             ansible-playbook --syntax-check "$pb" </dev/null || rc=1
             echo "::endgroup::"

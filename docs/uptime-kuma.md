@@ -17,7 +17,7 @@ Defaults in `roles/uptime-kuma/defaults/main.yml`. No secrets required.
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-uptime-kuma.yml
+ansible-playbook playbooks/services/uptime-kuma.yml
 ```
 
 ## Notes

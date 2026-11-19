@@ -1,6 +1,6 @@
 ---
 # node_exporter on every Proxmox node, then Prometheus + Grafana + pve-exporter
-# on the monitoring CT. Firewall rules: configure-firewall.yml.
+# on the monitoring CT. Firewall rules: platform/firewall.yml.
 - name: Install node_exporter on Proxmox nodes
   hosts: proxmox_nodes
   gather_facts: true

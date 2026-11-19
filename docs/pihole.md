@@ -27,7 +27,7 @@ Defaults in `roles/pihole/defaults/main.yml`. Override in `inventory.yml` or `gr
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-pihole.yml
+ansible-playbook playbooks/services/pihole.yml
 ```
 
 ## Notes
