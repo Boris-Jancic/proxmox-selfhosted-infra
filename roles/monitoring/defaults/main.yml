@@ -1,0 +1,47 @@
+---
+# Pinned tags; bump deliberately after reading release notes.
+prometheus_image: "prom/prometheus:v3.15.1"
+grafana_image: "grafana/grafana:13.2.6"
+pve_exporter_image: "prompve/prometheus-pve-exporter:3.11.0"
+alertmanager_image: "prom/alertmanager:v0.34.2"
+blackbox_exporter_image: "prom/blackbox-exporter:v0.29.0"
+
+monitoring_install_dir: /opt/monitoring
+prometheus_data_dir: "{{ monitoring_install_dir }}/prometheus/data"
+grafana_data_dir: "{{ monitoring_install_dir }}/grafana/data"
+grafana_provisioning_dir: "{{ monitoring_install_dir }}/grafana/provisioning"
+grafana_dashboards_dir: "{{ monitoring_install_dir }}/grafana/dashboards"
+alertmanager_config_dir: "{{ monitoring_install_dir }}/alertmanager/config"
+alertmanager_data_dir: "{{ monitoring_install_dir }}/alertmanager/data"
+
+prometheus_host_port: 9090
+grafana_host_port: 3000
+alertmanager_host_port: 9093
+
+prometheus_scrape_interval: 30s
+prometheus_retention_time: 30d
+prometheus_retention_size: 8GB
+
+# Read-only PVE token (PVEAuditor on /), managed by roles/proxmox_host --tags tokens.
+pve_exporter_user: "{{ proxmox_api_user }}"
+pve_exporter_token_id: "{{ proxmox_prometheus_token_id }}"
+
+# Telegram receiver. Secrets: alertmanager_telegram_bot_token,
+# alertmanager_telegram_chat_id (secrets.yml).
+alertmanager_repeat_interval: 4h
+
+# Dead-man's switch: the always-firing Watchdog alert pings this URL
+# (e.g. a healthchecks.io check). Empty = Watchdog is dropped.
+alertmanager_watchdog_url: "{{ alertmanager_healthchecks_url | default('') }}"
+
+# Public URLs probed end to end (Cloudflare → tunnel → Caddy → app).
+# WebsiteDown fires when one fails for 2m.
+blackbox_http_targets:
+  - "https://blog.{{ cloudflare_zone }}"
+
+# Alert thresholds
+alert_disk_used_ratio: 0.85
+alert_memory_used_ratio: 0.90
+
+# Any node's API returns the whole cluster's guests, nodes and storage.
+pve_exporter_cluster_target: "{{ hostvars[groups['proxmox_nodes'][0]].ansible_host }}"

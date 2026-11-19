@@ -122,7 +122,7 @@ all:
             Do not edit manually.
           firewall_in:
             - { dport: 8080, source: [caddy, +monitors, +management] }
-          # Hosts docker; provision-lxc.yml will set
+          # Hosts docker; provision/lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
 
@@ -135,7 +135,7 @@ all:
           cores: 1
           firewall_in:
             - { dport: 3001, source: [caddy, +monitors, +management] }
-          # Hosts docker; provision-lxc.yml will set
+          # Hosts docker; provision/lxc.yml will set
           # `lxc.apparmor.profile: unconfined` on the CT.
           lxc_docker_host: true
 
@@ -153,6 +153,25 @@ all:
           homepage_allowed_hosts: "homepage.{{ cloudflare_zone }},192.168.88.104:3000"
           firewall_in:
             - { dport: 3000, source: [caddy, +management] }
+
+        monitoring:
+          ctid: 105
+          ansible_host: 192.168.88.105
+          pve_node: pve-worker
+          memory: 1024
+          disk: 16
+          cores: 2
+          description: |
+            # LXC - Monitoring
+            Prometheus + Grafana + pve-exporter
+
+            Do not edit manually.
+          lxc_docker_host: true
+          # LAN-only like Portainer: no Caddy route, no tunnel hostname.
+          firewall_in:
+            - { dport: 3000, source: lan, comment: grafana }
+            - { dport: 9090, source: lan, comment: prometheus }
+            - { dport: 9093, source: lan, comment: alertmanager }
 
         caddy:
           ctid: 100

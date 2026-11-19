@@ -1,0 +1,4 @@
+---
+# Docker is installed via the `docker` role declared in meta/main.yml.
+- name: Deploy Prometheus + Grafana via docker compose
+  ansible.builtin.include_tasks: deploy.yml

@@ -161,11 +161,11 @@ alias pvetasks='pvenode task list --limit 20'
 
 # ap <playbook> [args] — ansible-playbook from the homelab repo.
 if [ -d "$HOMELAB_REPO/playbooks" ]; then
-  # Bare names resolve to playbooks/: `ap site --tags caddy`.
+  # Bare names resolve under playbooks/: `ap site --tags caddy`, `ap caddy`, `ap services/caddy`.
   ap() {
     local pb=$1; shift
     (cd "$HOMELAB_REPO" || exit
-     [ -f "$pb" ] || for c in "playbooks/$pb" "playbooks/$pb.yml"; do [ -f "$c" ] && pb=$c && break; done
+     [ -f "$pb" ] || for c in "playbooks/$pb" "playbooks/$pb.yml" playbooks/*/"$pb.yml"; do [ -f "$c" ] && pb=$c && break; done
      ansible-playbook "$pb" "$@")
   }
   _ap_complete() {
@@ -173,7 +173,7 @@ if [ -d "$HOMELAB_REPO/playbooks" ]; then
     if [[ $cur == -* ]]; then
       COMPREPLY=($(compgen -W '--tags --skip-tags --limit --check --diff --list-tasks --list-tags --ask-vault-pass --start-at-task -v -vv -vvv' -- "$cur"))
     else
-      COMPREPLY=($(compgen -W "$(cd "$HOMELAB_REPO/playbooks" && ls *.yml)" -- "$cur"))
+      COMPREPLY=($(compgen -W "$(cd "$HOMELAB_REPO/playbooks" && find . -name '*.yml' | sed 's#^\./##; s#\.yml$##')" -- "$cur"))
     fi
   }
   complete -F _ap_complete ap

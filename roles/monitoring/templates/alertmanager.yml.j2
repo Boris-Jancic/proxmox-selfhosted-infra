@@ -1,0 +1,44 @@
+# Managed by Ansible (roles/monitoring). Edits here are overwritten.
+route:
+  receiver: telegram
+  group_by: [alertname, instance, id]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: {{ alertmanager_repeat_interval }}
+  routes:
+    - matchers: ['alertname = "Watchdog"']
+      receiver: {{ 'watchdog' if alertmanager_watchdog_url else 'blackhole' }}
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 1m
+
+inhibit_rules:
+  - source_matchers: ['alertname = "PveNodeDown"']
+    target_matchers: ['alertname = "TargetDown"']
+    equal: []
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token: "{{ alertmanager_telegram_bot_token }}"
+        chat_id: {{ alertmanager_telegram_chat_id | int }}
+        parse_mode: HTML
+        send_resolved: true
+        message: |-{% raw %}
+          {{ range .Alerts -}}
+          {{ if eq .Status "resolved" }}✅ <b>RESOLVED</b>{{ else if eq .Labels.severity "critical" }}🔴 <b>CRITICAL</b>{{ else if eq .Labels.severity "warning" }}🟠 <b>WARNING</b>{{ else }}🔵 <b>INFO</b>{{ end }} · <b>{{ .Labels.alertname }}</b>
+          {{ with .Annotations.summary }}{{ . }}
+          {{ else }}{{ with or .Labels.name .Labels.instance .Labels.id }}🖥 <code>{{ . }}</code>
+          {{ end }}{{ end -}}
+          🕒 {{ .StartsAt.UTC.Format "02 Jan 15:04" }}{{ if eq .Status "resolved" }} → {{ .EndsAt.UTC.Format "15:04" }}{{ end }} UTC
+
+          {{ end -}}
+{% endraw %}
+          <a href="http://{{ ansible_host }}:{{ grafana_host_port }}">Grafana</a> · <a href="http://{{ ansible_host }}:{{ alertmanager_host_port }}">Alertmanager</a>
+  - name: blackhole
+{% if alertmanager_watchdog_url %}
+  - name: watchdog
+    webhook_configs:
+      - url: "{{ alertmanager_watchdog_url }}"
+        send_resolved: false
+{% endif %}

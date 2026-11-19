@@ -23,7 +23,7 @@ qdevice:
 ```
 
 ```bash
-ansible-playbook playbooks/configure-qdevice.yml
+ansible-playbook playbooks/platform/qdevice.yml
 pvecm status   # Expected votes: 3, Qdevice listed under Membership
 ```
 
