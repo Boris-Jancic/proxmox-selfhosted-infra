@@ -75,7 +75,7 @@ proxmoxNode: {{ hostvars[h].pve_node }}
         # Cloudflare tunnel widget disabled: create an API token at
         # dash.cloudflare.com → My Profile → API Tokens with permission
         # `Account → Cloudflare Tunnel → Read`, save it in secrets.yml as
-        # `cloudflare_api_token`, then re-run configure-homepage.yml.
+        # `cloudflare_api_token`, then re-run services/homepage.yml.
 {% endif %}
 
 - Compute:

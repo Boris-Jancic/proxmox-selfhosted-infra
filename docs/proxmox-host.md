@@ -47,9 +47,9 @@ Defaults in `roles/proxmox_host/defaults/main.yml`. `proxmox_node` lives in `gro
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-proxmox-host.yml
-ansible-playbook playbooks/configure-proxmox-host.yml --tags backup     # storage + job only
-ansible-playbook playbooks/configure-proxmox-host.yml --tags cleanup
+ansible-playbook playbooks/platform/proxmox-host.yml
+ansible-playbook playbooks/platform/proxmox-host.yml --tags backup     # storage + job only
+ansible-playbook playbooks/platform/proxmox-host.yml --tags cleanup
 ```
 
 Idempotent: a re-run reports `changed=0`.
@@ -86,5 +86,5 @@ The node was renamed `pve` → `pve-brain`. Renaming is manual; Ansible only gua
 
 ## Notes
 
-- Removed during the cleanup (not recreated by Ansible): Kali and Ubuntu live-server ISOs. The noble cloud image is kept because `roles/ubuntu` downloads it for `provision-vms.yml`.
+- Removed during the cleanup (not recreated by Ansible): Kali and Ubuntu live-server ISOs. The noble cloud image is kept because `roles/ubuntu` downloads it for `provision/vms.yml`.
 - `local-lvm` has two LVs not referenced by any guest config: `vm-106-disk-0` (20G) and `vm-101-disk-0` (4G). Review before removing.

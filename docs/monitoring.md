@@ -57,14 +57,14 @@ Test after deploy: `docker exec alertmanager amtool alert add Test severity=warn
 
 1. Create the token: Datacenter → Permissions → API Tokens → Add, user `root@pam`, ID `prometheus`, privilege separation **on**.
 2. Put its secret in `secrets.yml` as `proxmox_prometheus_token_secret`, set `grafana_admin_password` and the Telegram secrets (see above).
-3. Grant it PVEAuditor: `ansible-playbook playbooks/configure-proxmox-host.yml --tags tokens`.
+3. Grant it PVEAuditor: `ansible-playbook playbooks/platform/proxmox-host.yml --tags tokens`.
 
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/provision-lxc.yml
-ansible-playbook playbooks/configure-firewall.yml
-ansible-playbook playbooks/configure-monitoring.yml
+ansible-playbook playbooks/provision/lxc.yml
+ansible-playbook playbooks/platform/firewall.yml
+ansible-playbook playbooks/services/monitoring.yml
 ```
 
 The firewall run opens 8006 (`api_clients`) and 9100 (`metrics_scrapers`) on the nodes to the monitoring CT, and 3000/9090/9093 on the CT to the LAN.

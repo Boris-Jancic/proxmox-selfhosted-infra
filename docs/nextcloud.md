@@ -30,7 +30,7 @@ Defaults in `roles/nextcloud-aio/defaults/main.yml`.
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-nextcloud.yml
+ansible-playbook playbooks/services/nextcloud.yml
 ```
 
 ## First-run setup
@@ -52,7 +52,7 @@ https://192.168.88.110:8080
 
 ## Notes
 
-- VM must exist first — provision with `ansible-playbook playbooks/provision-vms.yml`.
+- VM must exist first — provision with `ansible-playbook playbooks/provision/vms.yml`.
 - Data dir (`/mnt/nextcloud-data`) must exist on the VM before first run; the role does not create it.
 - AIO spawns its own containers — do not manage them with `docker compose` directly.
 - Caddy needs two vhosts: `cloud.*` → port 11000 and `nextcloud.*` → port 8080 (with `backend_ssl: true`).
