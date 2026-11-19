@@ -37,10 +37,10 @@ Still in the tunnel config → **Public Hostnames → Add a public hostname**. E
 |---|---|---|
 | `proxmox` | `proxmox.<zone>` | `http://localhost:80` |
 | `pihole` | `pihole.<zone>` | `http://localhost:80` |
-| `cloud` | `cloud.<zone>` | `http://localhost:80` |
-| `nextcloud` | `nextcloud.<zone>` | `http://localhost:80` |
 | `homepage` | `homepage.<zone>` | `http://localhost:80` |
 | `kuma` | `kuma.<zone>` | `http://localhost:80` |
+| `cloud` | `cloud.<zone>` | `http://localhost:80` |
+| `blog` | `blog.<zone>` | `http://localhost:80` |
 | `vaultwarden` | `vaultwarden.<zone>` | `http://localhost:80` |
 
 Cloudflare auto-creates the matching DNS `CNAME` for each hostname. The hostnames must match the `domain` values in the `caddy` host's `caddy_routes` (in `inventory.yml`) exactly.
