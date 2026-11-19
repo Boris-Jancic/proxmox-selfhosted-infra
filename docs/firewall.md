@@ -50,7 +50,7 @@ flowchart LR
 |---|---|---|---|
 | Cloudflare tunnel → Caddy | each app | its app port, 8006 on pve-brain | `caddy` alias, `api_clients` IPSet |
 | Homepage, Uptime Kuma | apps, both nodes | app ports, 8006 | `monitors`, `api_clients` IPSets |
-| Monitoring CT | both nodes | 8006, 9100 | `api_clients`, `metrics_scrapers` IPSets |
+| Monitoring CT | both nodes | 8006 | `api_clients` IPSet |
 | Any LAN client | Pi-hole / Caddy / Portainer / Grafana, Prometheus | 53 / 80 / 9000, 9443 / 3000, 9090, 9093 | `lan` alias (DNS: any source) |
 | Nodes (+ `pve_fw_admin_cidrs`) | nodes, every firewalled guest | 22, 8006, console, all app ports | `management` IPSet |
 | Node ↔ node | corosync | UDP 5405-5412 | built in |
@@ -59,7 +59,7 @@ flowchart LR
 
 ## Policy
 
-- **Nodes:** default DROP. GUI/SSH/console (22, 8006, 3128, 5900-5999) only from `+management` (both nodes + `pve_fw_admin_cidrs`), built in by PVE. Corosync between nodes is built in. `api_clients` (Caddy, Homepage, Uptime Kuma, monitoring) may reach 8006; `metrics_scrapers` (monitoring) may reach 9100.
+- **Nodes:** default DROP. GUI/SSH/console (22, 8006, 3128, 5900-5999) only from `+management` (both nodes + `pve_fw_admin_cidrs`), built in by PVE. Corosync between nodes is built in. `api_clients` (Caddy, Homepage, Uptime Kuma, monitoring) may reach 8006.
 - **Guests:** default DROP inbound. SSH from `+management`, ping from `lan`, and each app port only from `caddy`, `+monitors` (Homepage, Uptime Kuma) and `+management`. Pi-hole DNS is open to everyone.
 - **VM 110** (self-hosted GitHub runner) cannot open connections to the nodes (`OUT DROP -dest +pve_nodes`).
 - **k8s VMs 120/130** have no `firewall_in` and stay unfiltered.
@@ -73,7 +73,6 @@ flowchart LR
 | `pve_fw_admin_cidrs` | `[]` | Extra client IPs for direct access; added to `management`. Empty = tunnel-only |
 | `pve_fw_lan_cidr` | `192.168.88.0/24` | `lan` alias |
 | `pve_fw_api_clients` | caddy, homepage, uptime-kuma, monitoring | Guests allowed to 8006 on the nodes |
-| `pve_fw_metrics_scrapers` | monitoring | Guests allowed to 9100 (node_exporter) on the nodes |
 | `pve_fw_monitors` | homepage, uptime-kuma | Guests allowed to poll app ports |
 
 Guest rule schema (on the host in `inventory.yml`):

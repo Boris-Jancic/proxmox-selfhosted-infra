@@ -14,7 +14,7 @@ route:
 
 inhibit_rules:
   - source_matchers: ['alertname = "PveNodeDown"']
-    target_matchers: ['alertname =~ "TargetDown|PveGuestStopped"']
+    target_matchers: ['alertname = "TargetDown"']
     equal: []
 
 receivers:

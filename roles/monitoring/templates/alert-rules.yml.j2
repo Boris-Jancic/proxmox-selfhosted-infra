@@ -28,14 +28,6 @@ groups:
         annotations:
           summary: "{{ $labels.instance }} is down"
 
-      - alert: WebsiteSlow
-        expr: probe_duration_seconds{job="blackbox-http"} > 5
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "{{ $labels.instance }} takes {{ $value | humanizeDuration }} to respond"
-
   - name: proxmox
     rules:
       - alert: PveNodeDown
@@ -45,18 +37,17 @@ groups:
           severity: critical
         annotations:
           summary: "Proxmox node {{ $labels.id }} is offline"
+{% endraw %}
 
-      - alert: PveGuestStopped
+      - alert: PveNodeHighMemory
         expr: >-
-          (pve_up{id=~"(qemu|lxc)/.*"} == 0)
-          * on(id) group_left(name, node) pve_guest_info
-          and on(id) (max by (id) (pve_onboot_status) == 1)
-        for: 5m
+          (pve_memory_usage_bytes{id=~"node/.*"} / pve_memory_size_bytes > {{ alert_memory_used_ratio }})
+          * on(id) group_left(name) pve_node_info
+        for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "{{ $labels.name }} ({{ $labels.id }} on {{ $labels.node }}) is stopped but has onboot=1"
-{% endraw %}
+          summary: "{% raw %}Node {{ $labels.name }} memory at {{ $value | humanizePercentage }}{% endraw %}"
 
       - alert: PveStorageFull
         expr: >-
@@ -76,32 +67,3 @@ groups:
           severity: warning
         annotations:
           summary: "{% raw %}CT {{ $labels.name }} root disk is {{ $value | humanizePercentage }} full{% endraw %}"
-
-  - name: node
-    rules:
-      - alert: HostDiskFull
-        expr: >-
-          1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs|fuse.*"}
-          / node_filesystem_size_bytes > {{ alert_disk_used_ratio }}
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "{% raw %}{{ $labels.instance }} {{ $labels.mountpoint }} is {{ $value | humanizePercentage }} full{% endraw %}"
-
-      - alert: HostHighMemory
-        expr: 1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > {{ alert_memory_used_ratio }}
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "{% raw %}{{ $labels.instance }} memory at {{ $value | humanizePercentage }}{% endraw %}"
-
-      - alert: HostHighCpu
-        expr: >-
-          1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) > {{ alert_cpu_used_ratio }}
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "{% raw %}{{ $labels.instance }} CPU at {{ $value | humanizePercentage }}{% endraw %}"

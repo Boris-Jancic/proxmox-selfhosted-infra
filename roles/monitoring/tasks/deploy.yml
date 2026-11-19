@@ -93,17 +93,6 @@
     group: root
     mode: "0644"
 
-- name: Download community dashboards
-  ansible.builtin.get_url:
-    url: "{{ item.url }}"
-    dest: "{{ grafana_dashboards_dir }}/{{ item.name }}.json"
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ grafana_dashboards_remote }}"
-  loop_control:
-    label: "{{ item.name }}"
-
 - name: Bring monitoring stack up
   ansible.builtin.command: docker compose up -d
   args:

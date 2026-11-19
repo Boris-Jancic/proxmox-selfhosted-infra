@@ -27,10 +27,6 @@ pve_fw_api_clients:
   - uptime-kuma
   - monitoring
 
-# Guests that scrape node_exporter (9100) on the nodes.
-pve_fw_metrics_scrapers:
-  - monitoring
-
 # Guests that poll other guests' app ports (dashboards, monitors).
 pve_fw_monitors:
   - homepage

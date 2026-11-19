@@ -78,7 +78,7 @@ All roles follow `roles/pihole/` as the canonical example:
 
 Roles that need Docker declare `meta/main.yml` → `dependencies: [role: docker]`. Ansible deduplicates per play, so Docker is installed exactly once even if multiple roles depend on it.
 
-Roles: `caddy`, `pihole`, `vaultwarden`, `uptime-kuma`, `homepage`, `portainer`, `nextcloud-aio`, `github_runner`, `monitoring`, `node_exporter`, `docker`, `ubuntu` (VM provisioning), `proxmox_host`, `pve_firewall`, `qdevice`.
+Roles: `caddy`, `pihole`, `vaultwarden`, `uptime-kuma`, `homepage`, `portainer`, `nextcloud-aio`, `github_runner`, `monitoring`, `docker`, `ubuntu` (VM provisioning), `proxmox_host`, `pve_firewall`, `qdevice`.
 
 ### Secrets & variables
 
