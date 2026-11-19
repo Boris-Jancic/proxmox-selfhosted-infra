@@ -26,10 +26,15 @@ receivers:
         send_resolved: true
         message: |-{% raw %}
           {{ range .Alerts -}}
-          {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Labels.alertname }}</b>{{ with .Labels.severity }} · {{ . }}{{ end }}
-          {{ with .Annotations.summary }}{{ . }}{{ else }}{{ range .Labels.SortedPairs }}{{ if ne .Name "alertname" }}{{ .Name }}={{ .Value }} {{ end }}{{ end }}{{ end }}
+          {{ if eq .Status "resolved" }}✅ <b>RESOLVED</b>{{ else if eq .Labels.severity "critical" }}🔴 <b>CRITICAL</b>{{ else if eq .Labels.severity "warning" }}🟠 <b>WARNING</b>{{ else }}🔵 <b>INFO</b>{{ end }} · <b>{{ .Labels.alertname }}</b>
+          {{ with .Annotations.summary }}{{ . }}
+          {{ else }}{{ with or .Labels.name .Labels.instance .Labels.id }}🖥 <code>{{ . }}</code>
+          {{ end }}{{ end -}}
+          🕒 {{ .StartsAt.UTC.Format "02 Jan 15:04" }}{{ if eq .Status "resolved" }} → {{ .EndsAt.UTC.Format "15:04" }}{{ end }} UTC
+
           {{ end -}}
 {% endraw %}
+          <a href="http://{{ ansible_host }}:{{ grafana_host_port }}">Grafana</a> · <a href="http://{{ ansible_host }}:{{ alertmanager_host_port }}">Alertmanager</a>
   - name: blackhole
 {% if alertmanager_watchdog_url %}
   - name: watchdog
