@@ -55,6 +55,16 @@ for pb in $(find playbooks -name '*.yml'); do ansible-playbook --syntax-check "$
 
 No `--check` in CI: hosted runners can't reach 192.168.88.x, and the only self-hosted runner is scoped to `nextjs-blog`. A runner for this public repo would need root SSH to both nodes, so don't add one. Commands gated by `when:` use `changed_when: true`; handler names are capitalised and `notify:` must match exactly (case-sensitive).
 
+### Version pins (keep in sync)
+
+The Ansible versions are pinned in several places. When you bump any version, update all of them in the same commit:
+
+- `README.md` (Getting started) and the `proxmoxer` gotcha below: `pip install ansible==… ansible-core==… proxmoxer==…`
+- `requirements-ci.txt`: `ansible-core` equals the pve-brain version
+- `requirements.yml`: each collection equals the version bundled in that `ansible` release (`ansible-galaxy collection list` after `pip install ansible==<ver>`)
+
+Then run the lint checks above against the new pins.
+
 ## Architecture
 
 Playbooks: `playbooks/site.yml` imports, in order, `provision/` (guests via the API), `platform/` (nodes, firewall, qdevice) and `services/` (one role each). Run from the repo root so `ansible.cfg` applies.
