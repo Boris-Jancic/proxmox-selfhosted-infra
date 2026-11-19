@@ -128,18 +128,6 @@ proxmoxNode: {{ hostvars[h].pve_node }}
         siteMonitor: http://{{ hostvars['vaultwarden'].ansible_host }}:8080/
         {{ pve_stats('vaultwarden') }}
 
-    - Uptime Kuma:
-        href: https://kuma.{{ cloudflare_zone }}/
-        description: Uptime monitor · CT {{ hostvars['uptime-kuma'].ctid }}
-        icon: uptime-kuma.png
-        siteMonitor: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001/
-        {{ pve_stats('uptime-kuma') }}
-        # Widget reads the "pve" status page (kuma.<zone>/status/pve) over LAN.
-        widget:
-          type: uptimekuma
-          url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
-          slug: pve
-
     - Nextcloud:
         # LAN link to the app itself (AIO serves Nextcloud on :11000).
         # Public AIO-admin route was removed from Caddy on purpose.
@@ -153,6 +141,64 @@ proxmoxNode: {{ hostvars[h].pve_node }}
         #   type: nextcloud
         #   url: http://{{ hostvars['ubuntu-vm1'].ansible_host }}:11000
         #   key: '{% raw %}{{HOMEPAGE_VAR_NEXTCLOUD_KEY}}{% endraw %}'
+
+- Monitoring:
+{# CT 105 stack is LAN-only (no Caddy route), so hrefs use the LAN IP. #}
+    - Grafana:
+        href: {{ homepage_grafana_url }}/
+        description: Dashboards · CT {{ hostvars['monitoring'].ctid }}
+        icon: grafana.png
+        siteMonitor: {{ homepage_grafana_url }}/api/health
+        {{ pve_stats('monitoring') }}
+{% if grafana_admin_password is defined %}
+        # /api/admin/stats needs a Grafana server admin, so the widget uses
+        # the admin login. Change both together (docs/monitoring.md 5.6).
+        widget:
+          type: grafana
+          url: {{ homepage_grafana_url }}
+          username: admin
+          password: '{% raw %}{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}{% endraw %}'
+{% endif %}
+
+    - Prometheus:
+        href: {{ homepage_prometheus_url }}/targets
+        description: Metrics + alert rules · CT {{ hostvars['monitoring'].ctid }}
+        icon: prometheus.png
+        siteMonitor: {{ homepage_prometheus_url }}/-/healthy
+        widget:
+          type: prometheus
+          url: {{ homepage_prometheus_url }}
+
+    - Alertmanager:
+        href: {{ homepage_alertmanager_url }}/
+        description: Alert routing to Telegram · CT {{ hostvars['monitoring'].ctid }}
+        icon: mdi-bell-alert-outline
+        siteMonitor: {{ homepage_alertmanager_url }}/-/healthy
+        # Homepage has no Alertmanager widget; count alerts from Prometheus.
+        # Watchdog always fires by design, so it is left out.
+        widget:
+          type: prometheusmetric
+          url: {{ homepage_prometheus_url }}
+          refreshInterval: 30000
+          metrics:
+            - label: Firing
+              query: 'count(ALERTS{alertstate="firing", alertname!="Watchdog"}) or vector(0)'
+            - label: Pending
+              query: 'count(ALERTS{alertstate="pending"}) or vector(0)'
+            - label: Websites up
+              query: 'sum(probe_success) or vector(0)'
+
+    - Uptime Kuma:
+        href: https://kuma.{{ cloudflare_zone }}/
+        description: Uptime monitor · CT {{ hostvars['uptime-kuma'].ctid }}
+        icon: uptime-kuma.png
+        siteMonitor: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001/
+        {{ pve_stats('uptime-kuma') }}
+        # Widget reads the "pve" status page (kuma.<zone>/status/pve) over LAN.
+        widget:
+          type: uptimekuma
+          url: http://{{ hostvars['uptime-kuma'].ansible_host }}:3001
+          slug: pve
 
 - Today:
     - Calendar:

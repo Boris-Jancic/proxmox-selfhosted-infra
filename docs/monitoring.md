@@ -43,6 +43,16 @@ Grafana shows the **Proxmox cluster** dashboard in the **Homelab** folder. The d
 
 You cannot change this dashboard in Grafana. To change it, save a copy in Grafana, or change the JSON file in the role.
 
+The Homepage dashboard (CT 104) has a **Monitoring** group. The group has a card for each of these parts: Grafana, Prometheus and Alertmanager. Each card has a link to the LAN address of its part. The cards show these data:
+
+| Card | Data |
+|---|---|
+| Grafana | Number of dashboards, data sources and users |
+| Prometheus | Number of targets that are up, down and in total |
+| Alertmanager | Number of firing alerts and pending alerts, and number of websites that are up. Prometheus gives these data. The `Watchdog` alert is not included. |
+
+The Grafana card uses the `admin` user and `grafana_admin_password`. For more data, refer to `docs/homepage.md`.
+
 ## 4 Alerts
 
 ### 4.1 Alert rules
@@ -203,6 +213,12 @@ Grafana uses `grafana_admin_password` only when it makes its database for the fi
 
 ```bash
 ssh root@192.168.88.105 'docker exec grafana grafana cli admin reset-admin-password <password>'
+```
+
+NOTE: The Grafana card on Homepage uses `grafana_admin_password`. Set the same password in `secrets.yml`. Then do this step:
+
+```bash
+ansible-playbook playbooks/services/homepage.yml
 ```
 
 ## 6 Troubleshooting

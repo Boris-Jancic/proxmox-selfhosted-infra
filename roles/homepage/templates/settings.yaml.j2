@@ -25,9 +25,9 @@ target: _blank
 
 # Column layout: each group renders as a vertical column, groups sit side
 # by side. `columns` is not used with style: column.
-# 6 columns: Infrastructure(4) · Compute(4) · Apps(4) · Today(calendar) · Admin(4) · Social(4).
-# fullWidth so six columns don't get squeezed into the default max width.
-maxGroupColumns: 6
+# 7 columns: Infrastructure(4) · Compute(4) · Apps(3) · Monitoring(4) · Today(calendar) · Admin(4) · Social(4).
+# fullWidth so seven columns don't get squeezed into the default max width.
+maxGroupColumns: 7
 fullWidth: true
 layout:
   Infrastructure:
@@ -39,6 +39,9 @@ layout:
   Apps:
     style: column
     icon: mdi-apps
+  Monitoring:
+    style: column
+    icon: mdi-chart-line
   Today:
     style: column
     icon: mdi-calendar
