@@ -1,10 +1,13 @@
 # Proxmox Selfhosted Infrastructure
+[![ansible-lint](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/ansible-lint.yml/badge.svg?branch=main)](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/ansible-lint.yml)
+[![secret-scan](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/secret-scan.yml)
+[![cluster-mcp](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/cluster-mcp.yml/badge.svg?branch=main)](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/actions/workflows/cluster-mcp.yml)
 [![License](https://img.shields.io/github/license/Boris-Jancic/proxmox-selfhosted-infra)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/Boris-Jancic/proxmox-selfhosted-infra)](https://github.com/Boris-Jancic/proxmox-selfhosted-infra/commits/main)
 [![Ansible](https://img.shields.io/badge/Ansible-IaC-red?logo=ansible)](https://www.ansible.com/)
 [![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?logo=proxmox)](https://www.proxmox.com/)
 [![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)](https://www.docker.com/)
-<p align="center"><img src="docs/images/architecture.svg" alt="Architecture: Cloudflare tunnel to Caddy, two-node Proxmox cluster skylab (pve-brain, pve-worker) on LAN 192.168.88.0/24, managed by Ansible" width="100%"></p>
+<p align="center"><img src="docs/images/architecture.svg" alt="Architecture: Cloudflare tunnel to Caddy, two-node Proxmox cluster skylab (pve-brain, pve-worker) on LAN 192.168.88.0/24 with a monitoring CT, managed by Ansible" width="100%"></p>
 
 This repository uses Ansible to manage a two-node Proxmox VE cluster (`skylab`). All configuration is code.
 
@@ -79,21 +82,39 @@ For the diagram and the rules, refer to [docs/firewall.md](docs/firewall.md). Fo
 
 ## Getting started
 
-Ansible runs **directly on `pve-brain`**.
+### Prerequisites
+
+- Proxmox VE 9 (Debian 13, Python 3.13) on each node. The nodes are joined in one cluster (`pvecm`).
+- Ansible runs **directly on the primary node** (`pve-brain`), as root.
+- An SSH key on `pve-brain` (`~/.ssh/id_ed25519.pub`, see `controller_ssh_pubkey_path`) that also logs in to the other node. New CTs and VMs get this key at creation.
+- A domain on Cloudflare, for the tunnel. Refer to [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md).
+
+### Manual steps (one time)
+
+Ansible cannot do these steps. Do them before the first run:
+
+1. Create the Proxmox API token `root@pam!ansible` (privilege separation off): Datacenter → Permissions → API Tokens. Create the `homepage` and `prometheus` tokens the same way, with privilege separation on. `platform/proxmox-host.yml --tags tokens` gives them read-only access.
+2. Create the Cloudflare tunnel and its public hostnames. Refer to [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md).
+3. Create a Telegram bot for alerts. Refer to [docs/monitoring.md](docs/monitoring.md).
+
+### Run
 
 ```bash
-# 1. Install the dependencies into the system Python.
+# 1. Clone the repository on pve-brain.
+git clone https://github.com/Boris-Jancic/proxmox-selfhosted-infra.git
+cd proxmox-selfhosted-infra
+
+# 2. Install the dependencies into the system Python.
 #    pip writes to /usr/local/lib. It does not change the Proxmox packages.
 python3 -m pip install --break-system-packages ansible==12.3.0 ansible-core==2.19.9 proxmoxer==2.3.0
 ansible-galaxy collection install -r requirements.yml
 
-# 2. Copy the secrets file. Then fill in the values.
+# 3. Copy the secrets file. Then fill in the values (table below).
 cp group_vars/all/secrets.yml.example group_vars/all/secrets.yml
 
-# 3. Create the Proxmox API token (root@pam!ansible).
-#    Set the nodes, CTIDs, IPs and pve_node in inventory.yml.
+# 4. Set the nodes, CTIDs, IPs and pve_node in inventory.yml, and cloudflare_zone in group_vars/all/main.yml.
 
-# 4. Provision and configure all hosts.
+# 5. Provision and configure all hosts.
 ansible-playbook playbooks/site.yml
 
 # Or run each step.
@@ -108,12 +129,19 @@ ansible-playbook playbooks/site.yml --tags configure
 ansible-playbook playbooks/site.yml --tags caddy
 ```
 
+Some services need one more step after the first run (for example the Nextcloud AIO setup and the first Vaultwarden account). Refer to the docs of each service.
+
 ### Secrets
 
 | Variable | Description |
 |---|---|
 | `proxmox_api_token_secret` | Proxmox API token UUID (`root@pam!ansible`) |
 | `proxmox_homepage_token_secret` | Proxmox token for the homepage widget (`root@pam!homepage`) |
+| `proxmox_prometheus_token_secret` | Proxmox token for pve-exporter (`root@pam!prometheus`) |
+| `grafana_admin_password` | Grafana admin password. Applied only when the Grafana database is created |
+| `alertmanager_telegram_bot_token` | Telegram bot token for Alertmanager |
+| `alertmanager_telegram_chat_id` | Telegram chat ID that receives the alerts |
+| `alertmanager_healthchecks_url` | Optional. healthchecks.io ping URL for the Watchdog dead-man's switch |
 | `portainer_api_key` | Portainer access token for the homepage widget |
 | `github_pat` | GitHub PAT that registers the self-hosted runner |
 | `lxc_root_password` | Root password for new LXCs |
