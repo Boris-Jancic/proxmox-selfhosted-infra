@@ -1,94 +1,274 @@
 # Monitoring
 
-Prometheus + Alertmanager + Grafana + blackbox-exporter + [pve-exporter](https://github.com/prometheus-pve/prometheus-pve-exporter) as one Docker Compose stack, plus `node_exporter` on both Proxmox nodes.
+This document is written in ASD-STE100 Simplified Technical English.
 
-- **CT:** 105 | **Node:** pve-worker | **IP:** 192.168.88.105
-- **Grafana:** `http://192.168.88.105:3000` (LAN only, no Caddy route)
-- **Prometheus:** `http://192.168.88.105:9090` (LAN only, no auth)
-- **Alertmanager:** `http://192.168.88.105:9093` (LAN only, no auth; silences)
+## 1 General
 
-## What is scraped
+The monitoring system collects data from the cluster, shows the data on dashboards and sends alerts to Telegram.
 
-| Job | Target | Source |
+The system has these parts:
+
+| Part | Location | Function |
 |---|---|---|
-| `node` | both nodes `:9100` | Debian `prometheus-node-exporter` (`roles/node_exporter`) |
-| `pve` | pve-exporter → first node's API `:8006` | cluster-wide: nodes, guests, storage (`cluster=1`) |
-| `pve-node` | pve-exporter → each node's API | per-node config, e.g. guest `onboot` (`node=1`) |
-| `alertmanager` | itself | |
-| `blackbox-http` | blackbox-exporter → each URL in `blackbox_http_targets` | public sites, probed end to end through Cloudflare |
-| `prometheus` | itself | |
+| Prometheus | CT 105, port 9090 | Collects and keeps the metrics. Calculates the alert rules. |
+| Alertmanager | CT 105, port 9093 | Sends the alerts to Telegram and to healthchecks.io. |
+| Grafana | CT 105, port 3000 | Shows the dashboards. |
+| pve-exporter | CT 105, internal | Reads the Proxmox API and gives metrics to Prometheus. |
+| blackbox-exporter | CT 105, internal | Sends HTTP requests to the public websites. |
+| node_exporter | pve-brain and pve-worker, port 9100 | Gives the host metrics of each node. |
 
-Dashboards are provisioned into the **Homelab** folder:
+CT 105 (`monitoring`) is on pve-worker. Its IP address is 192.168.88.105. The parts on CT 105 run in one Docker Compose stack in `/opt/monitoring`.
 
-- **Proxmox cluster** (bundled, `roles/monitoring/files/dashboards/`): node/guest CPU, memory, network, storage and guest disk use.
-- **Node Exporter Full** (rfmoz, pinned commit): per-node host detail.
+Grafana, Prometheus and Alertmanager are available only on the LAN. They do not have a Caddy route. Prometheus and Alertmanager do not have a login.
 
-## Alerts
+## 2 Data collection
 
-Rules: `roles/monitoring/templates/alert-rules.yml.j2`. Alertmanager sends them to Telegram, repeating every 4h while firing, plus a resolved message.
+Prometheus collects data from these jobs each 30 seconds:
 
-| Alert | Fires when | For |
+| Job | Target | Data |
 |---|---|---|
-| `WebsiteDown` | a URL in `blackbox_http_targets` fails (non-2xx, TLS error, timeout 10s) | 2m |
-| `WebsiteSlow` | a URL takes more than 5s to respond | 10m |
-| `TargetDown` | any scrape target (node_exporter, pve-exporter, ...) unreachable | 2m |
-| `PveNodeDown` | PVE reports a node offline (mutes `TargetDown` / `PveGuestStopped`) | 2m |
-| `PveGuestStopped` | a guest with `onboot=1` is stopped | 5m |
-| `PveStorageFull` / `PveGuestDiskFull` | PVE storage / CT root disk > 85% | 10m |
-| `HostDiskFull` | node filesystem > 85% | 10m |
-| `HostHighMemory` / `HostHighCpu` | node RAM / CPU > 90% | 10m |
-| `Watchdog` | always; pings `alertmanager_healthchecks_url` every minute | — |
+| `node` | Port 9100 on each node | CPU, memory, disks and network of the node |
+| `pve` | pve-exporter, which reads the API of pve-brain | Nodes, guests and storage of the full cluster |
+| `pve-node` | pve-exporter, which reads the API of each node | The `onboot` value of each guest |
+| `blackbox-http` | blackbox-exporter, which sends a request to each URL in `blackbox_http_targets` | Website status and response time |
+| `prometheus` | Prometheus | Status of Prometheus |
+| `alertmanager` | Alertmanager | Status of Alertmanager |
 
-The Watchdog is a dead-man's switch: if the CT, Prometheus or Alertmanager dies, healthchecks.io stops getting pings and alerts you. Without the URL it is dropped.
+The `blackbox-http` request goes through Cloudflare, the tunnel and Caddy to the application. Thus, it finds a problem in each of these parts.
 
-Thresholds: `alert_disk_used_ratio`, `alert_memory_used_ratio`, `alert_cpu_used_ratio`.
+Prometheus keeps the data for 30 days or until the data is 8 GB. The first limit that the data gets to applies.
 
-### Telegram setup
+## 3 Dashboards
 
-1. In Telegram, message `@BotFather` → `/newbot` → copy the token.
-2. Send your bot any message (or add it to a group and post there).
-3. `curl -s https://api.telegram.org/bot<token>/getUpdates` → `message.chat.id` (negative for groups).
-4. Put both in `secrets.yml` as `alertmanager_telegram_bot_token` / `alertmanager_telegram_chat_id`.
-5. Optional: create a healthchecks.io check (period 1 min, grace 5 min) and set `alertmanager_healthchecks_url` to its ping URL.
+Grafana shows these dashboards in the **Homelab** folder:
 
-Test after deploy: `docker exec alertmanager amtool alert add Test severity=warning --alertmanager.url=http://localhost:9093`.
+- **Proxmox cluster**: CPU, memory, network and storage of the nodes and the guests. The JSON file is in `roles/monitoring/files/dashboards/`.
+- **Node Exporter Full**: Detailed host data for each node. Ansible downloads a fixed version of this dashboard.
 
-## Prerequisites
+You cannot change these dashboards in Grafana. To change a dashboard, save a copy in Grafana, or change the JSON file in the role.
 
-1. Create the token: Datacenter → Permissions → API Tokens → Add, user `root@pam`, ID `prometheus`, privilege separation **on**.
-2. Put its secret in `secrets.yml` as `proxmox_prometheus_token_secret`, set `grafana_admin_password` and the Telegram secrets (see above).
-3. Grant it PVEAuditor: `ansible-playbook playbooks/platform/proxmox-host.yml --tags tokens`.
+## 4 Alerts
 
-## Deploy
+### 4.1 Alert rules
+
+The rules are in `roles/monitoring/templates/alert-rules.yml.j2`.
+
+| Alert | Condition | Time before the alert starts | Severity |
+|---|---|---|---|
+| `WebsiteDown` | A URL in `blackbox_http_targets` does not send a 2xx response, has a TLS error or does not respond in 10 seconds. | 2 minutes | critical |
+| `WebsiteSlow` | A URL takes more than 5 seconds to respond. | 10 minutes | warning |
+| `TargetDown` | Prometheus cannot read a target. | 2 minutes | critical |
+| `PveNodeDown` | Proxmox shows that a node is offline. | 2 minutes | critical |
+| `PveGuestStopped` | A guest with `onboot=1` is stopped. | 5 minutes | warning |
+| `PveStorageFull` | A Proxmox storage is more than 85% full. | 10 minutes | warning |
+| `PveGuestDiskFull` | The root disk of a CT is more than 85% full. | 10 minutes | warning |
+| `HostDiskFull` | A file system on a node is more than 85% full. | 10 minutes | warning |
+| `HostHighMemory` | A node uses more than 90% of its memory. | 10 minutes | warning |
+| `HostHighCpu` | A node uses more than 90% of its CPU. | 10 minutes | warning |
+| `Watchdog` | Always active. | 0 | none |
+
+When `PveNodeDown` is active, Alertmanager does not send `TargetDown` and `PveGuestStopped`. These alerts are usually the result of the same problem.
+
+To change the limits, change `alert_disk_used_ratio`, `alert_memory_used_ratio` and `alert_cpu_used_ratio`.
+
+### 4.2 Telegram messages
+
+Alertmanager sends a message when an alert starts. It sends the message again each 4 hours while the alert stays active. It sends a "RESOLVED" message when the alert stops.
+
+Each message shows:
+
+- The severity: 🔴 critical, 🟠 warning, 🔵 info or ✅ resolved.
+- The name of the alert.
+- The summary of the alert. If the alert has no summary, the message shows the host or the URL.
+- The start time in UTC. A "RESOLVED" message also shows the end time.
+- Links to Grafana and Alertmanager. These links operate only on the LAN.
+
+### 4.3 Watchdog
+
+The `Watchdog` alert is always active. Alertmanager sends it each minute to the healthchecks.io URL in `alertmanager_healthchecks_url`.
+
+If CT 105, Prometheus or Alertmanager stops, healthchecks.io does not get the signal. Then healthchecks.io sends an alert to you.
+
+If `alertmanager_healthchecks_url` is empty, Alertmanager does not send the `Watchdog` alert.
+
+## 5 Procedures
+
+### 5.1 Make the Telegram bot
+
+1. In Telegram, send `/newbot` to `@BotFather`.
+2. Write down the token that `@BotFather` gives.
+3. Open the chat with your bot.
+4. Push **Start**.
+5. Send a message to the bot.
+6. On pve-brain, get the chat ID:
+
+   ```bash
+   curl -s "https://api.telegram.org/bot<token>/getUpdates" | python3 -c 'import sys,json;[print(u["message"]["chat"]["id"]) for u in json.load(sys.stdin)["result"] if "message" in u]'
+   ```
+
+7. Write down the chat ID. The chat ID of a group is a negative number.
+8. Make sure that the bot can send a message to you:
+
+   ```bash
+   curl -s "https://api.telegram.org/bot<token>/sendMessage" -d chat_id=<id> -d text=test
+   ```
+
+NOTE: If `getUpdates` shows `"result":[]`, the bot did not get a message. Do step 3 to step 6 again. Do step 6 immediately after step 5.
+
+NOTE: You can also get your user ID from `@userinfobot`. For a private chat, the user ID is the chat ID.
+
+CAUTION: Do not put the bot token in chats, tickets or commits. If the token is visible to other persons, send `/revoke` to `@BotFather` and use the new token.
+
+### 5.2 Prepare the secrets and the token
+
+1. In the Proxmox GUI, go to **Datacenter → Permissions → API Tokens**.
+2. Click **Add**.
+3. Set **User** to `root@pam`, **Token ID** to `prometheus` and **Privilege Separation** to on.
+4. Write down the token secret.
+5. Add these values to `group_vars/all/secrets.yml`:
+
+   | Variable | Value |
+   |---|---|
+   | `proxmox_prometheus_token_secret` | The token secret from step 4 |
+   | `grafana_admin_password` | A strong password |
+   | `alertmanager_telegram_bot_token` | The bot token from procedure 5.1 |
+   | `alertmanager_telegram_chat_id` | The chat ID from procedure 5.1 |
+   | `alertmanager_healthchecks_url` | Optional. The ping URL of a healthchecks.io check with a period of 1 minute and a grace time of 5 minutes. |
+
+6. Give the read-only role to the token:
+
+   ```bash
+   ansible-playbook playbooks/platform/proxmox-host.yml --tags tokens </dev/null | cat
+   ```
+
+NOTE: The playbook stops with an error if the token does not exist. Do step 1 to step 4 first.
+
+### 5.3 Deploy
+
+Do these steps on pve-brain, in the repository directory.
+
+1. Make CT 105:
+
+   ```bash
+   ansible-playbook playbooks/provision/lxc.yml </dev/null | cat
+   ```
+
+2. Apply the firewall rules:
+
+   ```bash
+   ansible-playbook playbooks/platform/firewall.yml </dev/null | cat
+   ```
+
+3. Install node_exporter and the monitoring stack:
+
+   ```bash
+   ansible-playbook playbooks/services/monitoring.yml </dev/null | cat
+   ```
+
+The firewall playbook opens these ports:
+
+| Source | Destination | Port |
+|---|---|---|
+| CT 105 | Both nodes | 8006 (`api_clients`), 9100 (`metrics_scrapers`) |
+| LAN | CT 105 | 3000, 9090, 9093 |
+
+### 5.4 Do a test of the system
+
+Do these steps on pve-brain.
+
+1. Make sure that all targets are `up`:
+
+   ```bash
+   curl -s http://192.168.88.105:9090/api/v1/targets | python3 -c 'import sys,json;[print(t["labels"]["job"],t["labels"]["instance"],t["health"],t["lastError"]) for t in json.load(sys.stdin)["data"]["activeTargets"]]'
+   ```
+
+2. Make sure that only `Watchdog` is active:
+
+   ```bash
+   curl -s http://192.168.88.105:9090/api/v1/alerts | python3 -c 'import sys,json;[print(a["labels"]["alertname"],a["state"]) for a in json.load(sys.stdin)["data"]["alerts"]]'
+   ```
+
+3. Send a test alert:
+
+   ```bash
+   ssh root@192.168.88.105 'docker exec alertmanager amtool alert add Test severity=warning --annotation=summary="test" --alertmanager.url=http://localhost:9093'
+   ```
+
+4. Make sure that the Telegram message arrives in approximately 30 seconds.
+5. Make sure that the "RESOLVED" message arrives in approximately 5 minutes.
+6. Open `http://192.168.88.105:3000`. Log in as `admin` with `grafana_admin_password`.
+7. Make sure that the two dashboards in the **Homelab** folder show data.
+
+### 5.5 Add a website
+
+1. Add the URL to `blackbox_http_targets` in `roles/monitoring/defaults/main.yml`.
+2. Do step 3 of procedure 5.3.
+3. Do step 1 of procedure 5.4.
+
+### 5.6 Change the Grafana admin password
+
+Grafana uses `grafana_admin_password` only when it makes its database for the first time. To change the password after that, do this step:
 
 ```bash
-ansible-playbook playbooks/provision/lxc.yml
-ansible-playbook playbooks/platform/firewall.yml
-ansible-playbook playbooks/services/monitoring.yml
+ssh root@192.168.88.105 'docker exec grafana grafana cli admin reset-admin-password <password>'
 ```
 
-The firewall run opens 8006 (`api_clients`) and 9100 (`metrics_scrapers`) on the nodes to the monitoring CT, and 3000/9090/9093 on the CT to the LAN.
+## 6 Troubleshooting
 
-## Variables
+| Problem | Possible cause | Correction |
+|---|---|---|
+| `getUpdates` shows `"result":[]`. | The bot did not get a message, or the message is older than 24 hours. | Do step 3 to step 6 of procedure 5.1 again. |
+| `docker exec` shows `No such container: alertmanager`. | You are on the wrong host, or the stack is not installed. | Use CT 105 (192.168.88.105). Do step 3 of procedure 5.3. |
+| SSH shows `REMOTE HOST IDENTIFICATION HAS CHANGED`. | CT 105 is new and has a new host key. | Do procedure 6.1. |
+| A `node` target is `down` with a timeout. | The firewall rules are not applied. | Do step 2 of procedure 5.3. |
+| A `pve` target is `down` with error 401 or 403. | The token does not exist or does not have the read-only role. | Do procedure 5.2. |
+| Telegram shows `403 Forbidden: bot can't initiate conversation`. | You did not push **Start** in the chat with the bot. | Do step 3 and step 4 of procedure 5.1. |
+| `PveGuestStopped` is active for a guest that you stopped. | The guest has `onboot=1`. | Set `onboot` to 0 on the node of the guest: `qm set <vmid> --onboot 0` or `pct set <ctid> --onboot 0`. |
+| The `pve` metrics stop. | pve-brain is offline. | Set `pve_exporter_cluster_target` to the IP address of pve-worker. Do step 3 of procedure 5.3. |
 
-Defaults in `roles/monitoring/defaults/main.yml`.
+### 6.1 Replace the host key of CT 105
+
+1. Get the fingerprint of the key from the CT:
+
+   ```bash
+   ssh root@192.168.88.20 'pct exec 105 -- ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
+   ```
+
+2. Compare this fingerprint with the fingerprint in the SSH warning.
+
+   WARNING: If the two fingerprints are not the same, do not continue. Another device can use the IP address.
+
+3. Remove the old key:
+
+   ```bash
+   ssh-keygen -f /root/.ssh/known_hosts -R 192.168.88.105
+   ```
+
+4. Connect again and accept the new key:
+
+   ```bash
+   ssh -o StrictHostKeyChecking=accept-new root@192.168.88.105 true
+   ```
+
+## 7 Variables
+
+The default values are in `roles/monitoring/defaults/main.yml`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `prometheus_image` | `prom/prometheus:v3.15.1` | Image tag |
-| `grafana_image` | `grafana/grafana:13.2.6` | Image tag |
-| `pve_exporter_image` | `prompve/prometheus-pve-exporter:3.11.0` | Image tag |
-| `alertmanager_image` | `prom/alertmanager:v0.34.2` | Image tag |
-| `alertmanager_repeat_interval` | `4h` | Re-notify interval while an alert fires |
-| `blackbox_exporter_image` | `prom/blackbox-exporter:v0.29.0` | Image tag |
-| `blackbox_http_targets` | `https://blog.<zone>` | Public URLs to probe |
-| `prometheus_retention_time` / `_size` | `30d` / `8GB` | TSDB retention, whichever hits first |
-| `prometheus_scrape_interval` | `30s` | Global scrape interval |
-| `pve_exporter_cluster_target` | first node in `proxmox_nodes` | Node whose API pve-exporter reads |
+| `prometheus_image` | `prom/prometheus:v3.15.1` | Prometheus image |
+| `alertmanager_image` | `prom/alertmanager:v0.34.2` | Alertmanager image |
+| `grafana_image` | `grafana/grafana:13.2.6` | Grafana image |
+| `pve_exporter_image` | `prompve/prometheus-pve-exporter:3.11.0` | pve-exporter image |
+| `blackbox_exporter_image` | `prom/blackbox-exporter:v0.29.0` | blackbox-exporter image |
+| `prometheus_scrape_interval` | `30s` | Time between two data collections |
+| `prometheus_retention_time` | `30d` | Maximum age of the data |
+| `prometheus_retention_size` | `8GB` | Maximum size of the data |
+| `alertmanager_repeat_interval` | `4h` | Time between two messages for the same active alert |
+| `blackbox_http_targets` | `https://blog.<zone>` | Websites that blackbox-exporter checks |
+| `pve_exporter_cluster_target` | First node in `proxmox_nodes` | Node whose API gives the cluster data |
+| `alert_disk_used_ratio` | `0.85` | Disk limit for the disk alerts |
+| `alert_memory_used_ratio` | `0.90` | Memory limit for `HostHighMemory` |
+| `alert_cpu_used_ratio` | `0.90` | CPU limit for `HostHighCpu` |
 
-## Notes
-
-- `grafana_admin_password` only applies when Grafana's DB is created. Change it later in the UI or with `docker exec grafana grafana cli admin reset-admin-password <pw>`.
-- If the target node (pve-brain) is down, `pve` metrics stop; `node` metrics for the other node continue. Point `pve_exporter_cluster_target` at the surviving node if needed.
-- Provisioned dashboards are read-only in the UI. Save a copy to edit, or change the JSON in the role.
-- Data lives in `/opt/monitoring` on the CT.
+NOTE: The images have a fixed version. Read the release notes before you change a version.
