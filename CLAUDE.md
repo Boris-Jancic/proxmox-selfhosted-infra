@@ -151,3 +151,4 @@ Two-node cluster `skylab` (group `proxmox_nodes`): `pve-brain` (192.168.88.10, i
 5. Add a matching inventory group under `children:`.
 6. Add `firewall_in` on the new host (its app port from `caddy`, `+monitors`, `+management`) and re-run `platform/firewall.yml`.
 7. Add a `caddy_routes` entry on the `caddy` host in `inventory.yml`, then re-run `services/caddy.yml`.
+8. Add a card for it to Homepage (`roles/homepage/templates/services.yaml.j2`, plus a native widget if Homepage has one; widget secrets go through `HOMEPAGE_VAR_*` in the compose template, never inline). Update the layout table in `docs/homepage.md` and re-run `services/homepage.yml`. Do this for every new app or app set, not only new CTs.

@@ -23,3 +23,9 @@ portainer_env_id: 2
 # Repo the self-hosted runner on ubuntu-vm1 registers against; the dashboard
 # card links to its runners page. Keep in sync with roles/github_runner.
 homepage_runner_repo: "{{ github_runner_repo | default('Boris-Jancic/nextjs-blog') }}"
+
+# Monitoring stack on CT 105 (roles/monitoring). LAN-only, no Caddy route.
+# Ports must match the monitoring role's *_host_port defaults.
+homepage_grafana_url: "http://{{ hostvars['monitoring'].ansible_host }}:3000"
+homepage_prometheus_url: "http://{{ hostvars['monitoring'].ansible_host }}:9090"
+homepage_alertmanager_url: "http://{{ hostvars['monitoring'].ansible_host }}:9093"
