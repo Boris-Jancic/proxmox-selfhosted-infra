@@ -1,0 +1,104 @@
+---
+- name: Ensure monitoring directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: "0755"
+  loop:
+    - { path: "{{ monitoring_install_dir }}", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/prometheus", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/prometheus/config", owner: 0 }
+    - { path: "{{ prometheus_data_dir }}", owner: 65534 }
+    - { path: "{{ grafana_data_dir }}", owner: 472 }
+    - { path: "{{ grafana_provisioning_dir }}/datasources", owner: 0 }
+    - { path: "{{ grafana_provisioning_dir }}/dashboards", owner: 0 }
+    - { path: "{{ grafana_dashboards_dir }}", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/alertmanager", owner: 0 }
+    - { path: "{{ monitoring_install_dir }}/blackbox", owner: 0 }
+    - { path: "{{ alertmanager_config_dir }}", owner: 65534 }
+    - { path: "{{ alertmanager_data_dir }}", owner: 65534 }
+  loop_control:
+    label: "{{ item.path }}"
+
+# Holds the PVE token and Grafana admin password: root-only, never logged.
+- name: Render docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_install_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+# Directory bind mount: the template's atomic replace would leave a file mount
+# pointing at the old inode, and SIGHUP would reload stale config.
+- name: Render prometheus.yml
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_install_dir }}/prometheus/config/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload prometheus
+
+- name: Render alert rules
+  ansible.builtin.template:
+    src: alert-rules.yml.j2
+    dest: "{{ monitoring_install_dir }}/prometheus/config/alert-rules.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload prometheus
+
+# Holds the Telegram bot token: readable only by the container user (nobody).
+- name: Render alertmanager.yml
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    owner: "65534"
+    group: "65534"
+    mode: "0600"
+  no_log: true
+  notify: Reload alertmanager
+
+- name: Render blackbox.yml
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ monitoring_install_dir }}/blackbox/blackbox.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload blackbox exporter
+
+- name: Render Grafana provisioning
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ grafana_provisioning_dir }}/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: grafana-datasources.yml.j2, dest: datasources/prometheus.yml }
+    - { src: grafana-dashboards.yml.j2, dest: dashboards/homelab.yml }
+  notify: Restart grafana
+
+# Grafana re-reads dashboard files on its own; no restart needed.
+- name: Copy bundled dashboards
+  ansible.builtin.copy:
+    src: dashboards/
+    dest: "{{ grafana_dashboards_dir }}/"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Bring monitoring stack up
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ monitoring_install_dir }}"
+  register: compose_up
+  changed_when: >
+    'Started' in compose_up.stderr
+    or 'Recreated' in compose_up.stderr
+    or 'Created' in compose_up.stderr

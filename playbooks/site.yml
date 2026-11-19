@@ -7,53 +7,57 @@
 #   ansible-playbook playbooks/site.yml --tags caddy
 
 - name: Provision LXC containers
-  ansible.builtin.import_playbook: provision-lxc.yml
+  ansible.builtin.import_playbook: provision/lxc.yml
   tags: [provision, lxc]
 
 - name: Provision VMs
-  ansible.builtin.import_playbook: provision-vms.yml
+  ansible.builtin.import_playbook: provision/vms.yml
   tags: [provision, vms]
 
 - name: Configure Proxmox nodes
-  ansible.builtin.import_playbook: configure-proxmox-host.yml
+  ansible.builtin.import_playbook: platform/proxmox-host.yml
   tags: [configure, proxmox-host]
 
 - name: Configure Proxmox firewall
-  ansible.builtin.import_playbook: configure-firewall.yml
+  ansible.builtin.import_playbook: platform/firewall.yml
   tags: [configure, firewall]
 
 - name: Configure corosync QDevice
-  ansible.builtin.import_playbook: configure-qdevice.yml
+  ansible.builtin.import_playbook: platform/qdevice.yml
   tags: [configure, qdevice]
 
 - name: Configure Pi-hole
-  ansible.builtin.import_playbook: configure-pihole.yml
+  ansible.builtin.import_playbook: services/pihole.yml
   tags: [configure, pihole]
 
 - name: Configure Vaultwarden
-  ansible.builtin.import_playbook: configure-vaultwarden.yml
+  ansible.builtin.import_playbook: services/vaultwarden.yml
   tags: [configure, vaultwarden]
 
 - name: Configure Uptime Kuma
-  ansible.builtin.import_playbook: configure-uptime-kuma.yml
+  ansible.builtin.import_playbook: services/uptime-kuma.yml
   tags: [configure, uptime-kuma]
 
 - name: Configure Homepage
-  ansible.builtin.import_playbook: configure-homepage.yml
+  ansible.builtin.import_playbook: services/homepage.yml
   tags: [configure, homepage]
 
 - name: Configure Portainer
-  ansible.builtin.import_playbook: configure-portainer.yml
+  ansible.builtin.import_playbook: services/portainer.yml
   tags: [configure, portainer]
 
 - name: Configure GitHub runner
-  ansible.builtin.import_playbook: configure-github-runner.yml
+  ansible.builtin.import_playbook: services/github-runner.yml
   tags: [configure, github-runner]
 
 - name: Configure Nextcloud AIO
-  ansible.builtin.import_playbook: configure-nextcloud.yml
+  ansible.builtin.import_playbook: services/nextcloud.yml
   tags: [configure, nextcloud]
 
+- name: Configure monitoring
+  ansible.builtin.import_playbook: services/monitoring.yml
+  tags: [configure, monitoring]
+
 - name: Configure Caddy
-  ansible.builtin.import_playbook: configure-caddy.yml
+  ansible.builtin.import_playbook: services/caddy.yml
   tags: [configure, caddy]

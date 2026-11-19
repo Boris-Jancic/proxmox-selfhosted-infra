@@ -18,12 +18,12 @@ Defaults in `roles/portainer/defaults/main.yml`. No secrets required.
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-portainer.yml
+ansible-playbook playbooks/services/portainer.yml
 ```
 
 ## Notes
 
-- Runs on `ubuntu-vm1` (VM 110) — VM must be provisioned first via `provision-vms.yml`.
+- Runs on `ubuntu-vm1` (VM 110) — VM must be provisioned first via `provision/vms.yml`.
 - First visit creates the admin account — do this immediately after deploy (Portainer locks out after a timeout).
 - Data persists in `/opt/portainer/data` on the VM.
 - Bump `portainer_image` deliberately; check releases at https://github.com/portainer/portainer/releases.
@@ -44,7 +44,7 @@ One-time setup:
    - URL `https://github.com/Boris-Jancic/nextjs-blog`, ref `refs/heads/main`, compose path `docker-compose.yml`, authentication = PAT.
    - GitOps updates: on, mechanism **Webhook**, **Re-pull image** on. Copy the webhook URL.
    - Env vars: `MINIO_DATA_DIR=/minio-data`, `MINIO_API_PORT=9100`, `MINIO_CONSOLE_PORT=9101` (9000 is Portainer), `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`. Missing `JWT_SECRET`/`ADMIN_PASSWORD_HASH` silently falls back to the compose dev defaults (admin password `admin`).
-4. **Runner**: `ansible-playbook playbooks/configure-github-runner.yml` (needs `github_pat` in `secrets.yml`).
+4. **Runner**: `ansible-playbook playbooks/services/github-runner.yml` (needs `github_pat` in `secrets.yml`).
 5. **Blog repo → Settings → Secrets and variables → Actions**: secret `PORTAINER_WEBHOOK_URL` = `http://127.0.0.1:9000/api/stacks/webhooks/<id>`; variable `NEXT_PUBLIC_SITE_URL` (inlined at build time).
 
 Rollback: in the stack editor set env `BLOG_IMAGE=ghcr.io/boris-jancic/nextjs-blog:<old-sha>` and update the stack.

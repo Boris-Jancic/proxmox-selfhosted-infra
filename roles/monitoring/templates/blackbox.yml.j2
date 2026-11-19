@@ -1,0 +1,9 @@
+# Managed by Ansible (roles/monitoring). Edits here are overwritten.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+      follow_redirects: true
+      fail_if_not_ssl: true

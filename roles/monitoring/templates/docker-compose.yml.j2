@@ -1,0 +1,68 @@
+services:
+  prometheus:
+    image: {{ prometheus_image }}
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time={{ prometheus_retention_time }}
+      - --storage.tsdb.retention.size={{ prometheus_retention_size }}
+    ports:
+      - "{{ prometheus_host_port }}:9090"
+    volumes:
+      - {{ monitoring_install_dir }}/prometheus/config:/etc/prometheus:ro
+      - {{ prometheus_data_dir }}:/prometheus
+
+  alertmanager:
+    image: {{ alertmanager_image }}
+    container_name: alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "{{ alertmanager_host_port }}:9093"
+    volumes:
+      - {{ alertmanager_config_dir }}:/etc/alertmanager:ro
+      - {{ alertmanager_data_dir }}:/alertmanager
+
+  blackbox-exporter:
+    image: {{ blackbox_exporter_image }}
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - {{ monitoring_install_dir }}/blackbox:/etc/blackbox:ro
+
+  pve-exporter:
+    image: {{ pve_exporter_image }}
+    container_name: pve-exporter
+    restart: unless-stopped
+    init: true
+    environment:
+      PVE_USER: "{{ pve_exporter_user }}"
+      PVE_TOKEN_NAME: "{{ pve_exporter_token_id }}"
+      PVE_TOKEN_VALUE: "{{ proxmox_prometheus_token_secret }}"
+      PVE_VERIFY_SSL: "false"
+
+  grafana:
+    image: {{ grafana_image }}
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "{{ grafana_host_port }}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - {{ grafana_data_dir }}:/var/lib/grafana
+      - {{ grafana_provisioning_dir }}:/etc/grafana/provisioning:ro
+      - {{ grafana_dashboards_dir }}:/var/lib/grafana-dashboards:ro

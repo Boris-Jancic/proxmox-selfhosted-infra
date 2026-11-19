@@ -28,11 +28,11 @@ Defaults in `roles/vaultwarden/defaults/main.yml`.
 
 ```bash
 # First run — allow registration
-ansible-playbook playbooks/configure-vaultwarden.yml
+ansible-playbook playbooks/services/vaultwarden.yml
 
 # Register your account at https://vaultwarden.yourdomain, then lock it down
 # Edit secrets.yml: vaultwarden_signups_allowed: "false"
-ansible-playbook playbooks/configure-vaultwarden.yml
+ansible-playbook playbooks/services/vaultwarden.yml
 ```
 
 ## Notes

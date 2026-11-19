@@ -42,7 +42,7 @@ caddy_routes:
 ## Deploy
 
 ```bash
-ansible-playbook playbooks/configure-caddy.yml
+ansible-playbook playbooks/services/caddy.yml
 ```
 
 The secret `cloudflare_tunnel_token` (in `secrets.yml`) is consumed once by `cloudflared service install`.

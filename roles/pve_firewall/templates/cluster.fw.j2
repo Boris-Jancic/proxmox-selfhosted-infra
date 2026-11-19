@@ -35,5 +35,5 @@ lan {{ pve_fw_lan_cidr }}
 
 # Node rules. SSH/GUI from +management and corosync between nodes are built in.
 [RULES]
-IN ACCEPT -source +api_clients -p tcp -dport 8006 -log nolog # caddy route, homepage + kuma checks
+IN ACCEPT -source +api_clients -p tcp -dport 8006 -log nolog # caddy route, homepage + kuma checks, pve-exporter
 IN Ping(ACCEPT) -source lan -log nolog
